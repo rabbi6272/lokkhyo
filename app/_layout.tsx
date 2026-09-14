@@ -47,6 +47,7 @@ function RootNavigator() {
         <Stack.Screen name="routine/new" options={{ headerShown: false }} />
         <Stack.Screen name="target/new" options={{ headerShown: false }} />
         <Stack.Screen name="profile/edit" options={{ headerShown: false }} />
+        <Stack.Screen name="settings/settings" options={{ headerShown: false }} />
       </Stack.Protected>
 
       <Stack.Protected guard={!user}>

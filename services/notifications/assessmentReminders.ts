@@ -12,6 +12,7 @@ import {
 import { listCourses } from '@/services/Courses';
 import { listAssessments } from '@/services/Assessments';
 import { getUpcomingAssessmentReminders, buildAssessmentReminderContent } from '@/lib/reminders';
+import { getNotificationPreferences } from '@/lib/notificationPreferences';
 import type { Assessment } from '@/lib/types';
 
 /**
@@ -34,7 +35,8 @@ export async function getUpcomingAssessmentRemindersForUser(userId: string) {
     .filter((r): r is PromiseFulfilledResult<(Assessment & { courseId: string })[]> => r.status === 'fulfilled')
     .flatMap((r) => r.value);
 
-  const upcoming = getUpcomingAssessmentReminders(allAssessments);
+  const { reminderHour, reminderMinute } = await getNotificationPreferences();
+  const upcoming = getUpcomingAssessmentReminders(allAssessments, new Date(), reminderHour, reminderMinute);
 
   return { upcoming, courseMap };
 }

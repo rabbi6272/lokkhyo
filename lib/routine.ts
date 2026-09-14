@@ -92,11 +92,14 @@ export function formatTime12h(hhmm: string): string {
 
 /**
  * Builds notification title and body for a given day's routine slots.
+ * When a student name is provided, the title is personalized.
  */
 export function buildDailyRoutineNotificationContent(
   daySlots: RoutineSlot[],
-): { title: string; body: string } {
-  const title = 'Good morning! 🌅';
+  studentName?: string,
+): { title: string; body: string; } {
+  const firstName = studentName?.trim().split(/\s+/)[0];
+  const title = firstName ? `Good morning, ${firstName}! 🌅` : 'Good morning! 🌅';
   const normalized = daySlots
     .map((s) => normalizeRoutineSlot(s))
     .filter((s): s is RoutineSlot => s !== null)
@@ -119,6 +122,8 @@ export function buildDailyRoutineNotificationContent(
 
   return {
     title,
-    body: `You have ${normalized.length} classes today. ${normalized.map((s) => `${s.courseLabel} at ${formatTime12h(s.startTime)}`).join(', ')} ${room}.`,
+    body: `You have ${normalized.length} classes today.\n
+    ${normalized.map((s) => `${s.courseLabel} at ${formatTime12h(s.startTime)}`).join('\n    ')}
+    ${room}.`,
   };
 }

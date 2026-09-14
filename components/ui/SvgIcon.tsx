@@ -9,6 +9,9 @@ import UserIcon from '@/assets/icons/user.svg';
 import ArrowLeftIcon from '@/assets/icons/arrow-left.svg';
 import CircleAddIcon from '@/assets/icons/circle-plus.svg';
 import TrashIcon from '@/assets/icons/trash.svg';
+import ChevronRightIcon from '@/assets/icons/angle-right.svg';
+import LogoutIcon from '@/assets/icons/logout.svg';
+import SettingsIcon from '@/assets/icons/settings.svg';
 
 const ICONS: Record<string, React.FC<SvgProps>> = {
   home: HomeIcon,
@@ -17,8 +20,11 @@ const ICONS: Record<string, React.FC<SvgProps>> = {
   targets: TargetsIcon,
   user: UserIcon,
   arrowLeft: ArrowLeftIcon,
+  settings: SettingsIcon,
   circleAdd: CircleAddIcon,
   trash: TrashIcon,
+  chevronRight: ChevronRightIcon,
+  logout: LogoutIcon,
 };
 
 type IconName = keyof typeof ICONS;

@@ -27,7 +27,7 @@ export function getReminderLeadDays(type: AssessmentType): number | undefined {
 }
 
 /**
- * Computes the device-local reminder trigger Date at 07:00 AM
+ * Computes the device-local reminder trigger Date at the given hour:minute
  * on (assessmentDate − leadDays).
  * Returns null if the assessment date is invalid or the trigger would be in the past.
  */
@@ -35,6 +35,8 @@ export function getAssessmentReminderTrigger(
   dateStr: string,
   type: AssessmentType,
   now: Date = new Date(),
+  hour: number = 7,
+  minute: number = 0,
 ): Date | null {
   const leadDays = REMINDER_LEAD_DAYS[type];
   if (leadDays === undefined) return null;
@@ -47,8 +49,8 @@ export function getAssessmentReminderTrigger(
   const day = Number(parts[2]);
   if (Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) return null;
 
-  const assessmentDate = new Date(year, month, day, 7, 0, 0, 0);
-  const triggerDate = new Date(year, month, day - leadDays, 7, 0, 0, 0);
+  const assessmentDate = new Date(year, month, day, hour, minute, 0, 0);
+  const triggerDate = new Date(year, month, day - leadDays, hour, minute, 0, 0);
 
   if (Number.isNaN(assessmentDate.getTime()) || Number.isNaN(triggerDate.getTime())) return null;
   if (assessmentDate.getTime() <= now.getTime()) return null;
@@ -63,6 +65,8 @@ export function getAssessmentReminderTrigger(
 export function getUpcomingAssessmentReminders(
   assessments: { id: string; type: string; name: string; date: string; courseId: string }[],
   now: Date = new Date(),
+  hour: number = 7,
+  minute: number = 0,
 ): {
   assessmentId: string;
   courseId: string;
@@ -84,7 +88,7 @@ export function getUpcomingAssessmentReminders(
     if (!isReminderType(a.type)) continue;
     if (typeof a.date !== 'string' || !a.date.trim()) continue;
 
-    const triggerDate = getAssessmentReminderTrigger(a.date.trim(), a.type, now);
+    const triggerDate = getAssessmentReminderTrigger(a.date.trim(), a.type, now, hour, minute);
     if (triggerDate) {
       upcoming.push({
         assessmentId: a.id,

@@ -13,9 +13,6 @@ export const ASSESSMENT_NOTIFICATION_PREFIX = 'lokkhyo-assessment.';
 export const NOTIFICATION_TYPE_DAILY_ROUTINE = 'daily-routine';
 export const NOTIFICATION_TYPE_ASSESSMENT_REMINDER = 'assessment-reminder';
 
-export const ROUTINE_NOTIFICATION_HOUR = 7;
-export const ROUTINE_NOTIFICATION_MINUTE = 0;
-
 let handlerInitialized = false;
 let channelsEnsured = false;
 
