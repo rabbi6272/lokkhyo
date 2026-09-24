@@ -12,7 +12,8 @@ import { BackStep } from '@/components/ui/BackStep';
 import { Colors } from '@/constants/theme';
 import { useSemesters } from '@/hooks/useSemesters';
 import { useProfile } from '@/hooks/useUserProfile';
-import { gpaRange, required } from '@/lib/validate';
+import { gpaRange, isDate, isNumeric, required } from '@/lib/validate';
+import { SvgIcon } from '@/components/ui/SvgIcon';
 
 
 export default function ProfileInfoCard() {
@@ -29,6 +30,8 @@ export default function ProfileInfoCard() {
   const [modalVisible, setModalVisible] = useState(false);
   const [newSemName, setNewSemName] = useState('');
   const [newSemGpa, setNewSemGpa] = useState('');
+  const [newSemStartDate, setNewSemStartDate] = useState('');
+  const [newSemTotalWeeks, setNewSemTotalWeeks] = useState('13');
   const [newSemErrors, setNewSemErrors] = useState<Record<string, string | null>>({});
 
   useEffect(() => {
@@ -68,8 +71,11 @@ export default function ProfileInfoCard() {
   };
 
   const handleCreateSemester = async () => {
+    const totalWeeks = Number(newSemTotalWeeks);
     const nextErrors: Record<string, string | null> = {
       name: required(newSemName, 'Semester name'),
+      startDate: required(newSemStartDate, 'Start date') || isDate(newSemStartDate),
+      totalWeeks: isNumeric(newSemTotalWeeks, 'Total weeks') || (totalWeeks <= 0 ? 'Total weeks must be positive.' : null),
     };
     const gpa = Number(newSemGpa);
     if (newSemGpa.trim()) {
@@ -83,31 +89,26 @@ export default function ProfileInfoCard() {
     const id = await createSemester.mutateAsync({
       name: newSemName.trim(),
       targetGpa: newSemGpa.trim() ? gpa : 0,
+      startDate: newSemStartDate.trim(),
+      totalWeeks,
     });
     setCurrentSemesterId(id);
     setNewSemName('');
     setNewSemGpa('');
+    setNewSemStartDate('');
+    setNewSemTotalWeeks('13');
     setModalVisible(false);
   };
-
-  const handleDeleteSemester = (id: string, name: string) => {
-    Alert.alert('Delete semester', `Delete "${name}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => deleteSemester.mutateAsync(id) },
-    ]);
-  };
-
 
   return (
     <>
       <BackStep title="Edit Profile" onBack={() => { navigation.goBack(); }} />
       <Wrapper style={{ flex: 1 }}>
-        <View style={{ flexGrow: 1, paddingVertical: 34 }}>
+        <View >
           <View style={styles.card}>
-            <View style={styles.header}>
-              <ThemedText type="title">Edit Profile</ThemedText>
+            <View style={styles.avatar}>
+              <SvgIcon name="user" size={100} color={Colors.tint} />
             </View>
-
             <Field
               label="Full name"
               placeholder="Your name"
@@ -187,6 +188,27 @@ export default function ProfileInfoCard() {
                     onChangeText={setNewSemGpa}
                     error={newSemErrors.targetGpa}
                   />
+                  <Field
+                    label="Start date (YYYY-MM-DD)"
+                    placeholder="2026-01-04"
+                    value={newSemStartDate}
+                    onChangeText={(v) => {
+                      setNewSemStartDate(v);
+                      setNewSemErrors((e) => ({ ...e, startDate: null }));
+                    }}
+                    error={newSemErrors.startDate}
+                  />
+                  <Field
+                    label="Total weeks"
+                    placeholder="13"
+                    keyboardType="numeric"
+                    value={newSemTotalWeeks}
+                    onChangeText={(v) => {
+                      setNewSemTotalWeeks(v);
+                      setNewSemErrors((e) => ({ ...e, totalWeeks: null }));
+                    }}
+                    error={newSemErrors.totalWeeks}
+                  />
                   <View style={styles.modalButtons}>
                     <Button
                       title="Cancel"
@@ -195,6 +217,8 @@ export default function ProfileInfoCard() {
                         setModalVisible(false);
                         setNewSemName('');
                         setNewSemGpa('');
+                        setNewSemStartDate('');
+                        setNewSemTotalWeeks('13');
                         setNewSemErrors({});
                       }}
                     />
@@ -214,18 +238,17 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#fff',
     borderRadius: 20,
-    paddingHorizontal: 20,
-    paddingVertical: 40,
+    paddingHorizontal: 16,
+    paddingVertical: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 4,
   },
-  header: {
+  avatar: {
     alignItems: 'center',
-    marginBottom: 28,
-    gap: 4,
+    marginBottom: 8
   },
   email: {
     opacity: 0.7,

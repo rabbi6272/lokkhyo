@@ -1,7 +1,6 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 
-import { HapticTab } from '@/components/HapticTabBar';
 import { SvgIcon } from '@/components/ui/SvgIcon';
 import { Colors } from '@/constants/theme';
 import { Text, View } from 'react-native';
@@ -17,7 +16,6 @@ export default function TabLayout() {
           height: 80,
           paddingTop: 10,
         },
-        tabBarButton: (props) => <HapticTab {...props} />,
         tabBarLabel(props) {
           return <Text style={{ fontFamily: props.focused ? 'InterSemiBold' : 'InterMedium', fontSize: 11, color: props.color, paddingTop: 2 }}>{props.children}</Text>;
         }
@@ -50,18 +48,18 @@ export default function TabLayout() {
           title: 'Routine',
           tabBarIcon: ({ color, focused }) => (
             <View style={{ flex: 1, paddingHorizontal: 13, backgroundColor: focused ? Colors.card : 'transparent', borderRadius: 30, }}>
-              <SvgIcon name="calendar" size={28} color={color} />
+              <SvgIcon name="routine" size={28} color={color} />
             </View>
           ),
         }}
       />
       <Tabs.Screen
-        name="targets"
+        name="attendance"
         options={{
-          title: 'Targets',
+          title: 'Attendance',
           tabBarIcon: ({ color, focused }) => (
             <View style={{ flex: 1, paddingHorizontal: 13, backgroundColor: focused ? Colors.card : 'transparent', borderRadius: 30, }}>
-              <SvgIcon name="targets" size={28} color={color} />
+              <SvgIcon name="calender" size={28} color={color} />
             </View>
           ),
         }}

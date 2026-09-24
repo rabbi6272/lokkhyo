@@ -14,7 +14,7 @@ export function useSemesters() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: { name: string; targetGpa: number }) => {
+    mutationFn: (data: { name: string; targetGpa: number; startDate: string; totalWeeks: number }) => {
       if (!user) throw new Error('Not authenticated');
       return createSemester(user.uid, data);
     },

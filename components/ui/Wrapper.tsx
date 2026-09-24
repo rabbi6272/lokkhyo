@@ -6,8 +6,8 @@ export function Wrapper({ style, children, noTopMargin }: { style?: any; childre
     <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
       <SafeAreaView style={[styles.safe, style, {
-        paddingTop: noTopMargin ? 0 : 16,
-      }]} edges={['top']}>
+        paddingTop: noTopMargin ? 0 : 12,
+      }]}>
         {children}
       </SafeAreaView>
     </KeyboardAvoidingView>

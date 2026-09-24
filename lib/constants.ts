@@ -1,14 +1,16 @@
-export const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+export const DAY_NAMES = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',];
 
-export const DAY_SHORT_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+export const DAY_SHORT_NAMES = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri',];
 
-export const ASSESSMENT_TYPES = ['ct', 'quiz', 'assignment', 'lab'] as const;
+export const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December',];
+
+export const ASSESSMENT_TYPES = ['ct', 'quiz', 'assignment', 'labFinal'] as const;
 
 export const ASSESSMENT_TYPE_LABELS: Record<string, string> = {
   ct: 'CT',
   quiz: 'Quiz',
   assignment: 'Assignment',
-  lab: 'Lab',
+  labFinal: 'Lab Final',
 };
 
 export const TARGET_TYPES = ['gpa', 'cgpa', 'attendance', 'custom'] as const;

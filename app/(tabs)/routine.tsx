@@ -4,17 +4,16 @@ import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { Chip } from '@/components/ui/Chip';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useRoutines } from '@/hooks/useRoutines';
 import { DAY_NAMES, DAY_SHORT_NAMES } from '@/lib/constants';
 import { parseTime } from '@/lib/validate';
 import { Wrapper } from '@/components/ui/Wrapper';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { SvgIcon } from '@/components/ui/SvgIcon';
 
 export default function RoutineScreen() {
   const { slots, isLoading, deleteRoutineSlot } = useRoutines();
-  const tint = Colors.tint;
 
   const [selectedDay, setSelectedDay] = useState<number>(new Date().getDay());
 
@@ -31,7 +30,7 @@ export default function RoutineScreen() {
 
   return (
     <Wrapper style={styles.safe}>
-      <PageHeader title="Routine" actions={"/routine/new" as ExternalPathString} icon="plus.circle.fill" />
+      <PageHeader title="Routine" actions={"/routine/new" as ExternalPathString} icon="circleAdd" />
 
       <ScrollView contentContainerStyle={styles.content} horizontal showsHorizontalScrollIndicator={false}>
         <View style={styles.days}>
@@ -57,7 +56,7 @@ export default function RoutineScreen() {
           <ThemedText style={styles.empty}>No classes on {DAY_NAMES[selectedDay]}.</ThemedText>
         ) : (
           daySlots.map((slot) => (
-            <View key={slot.id} style={[styles.slot, { borderColor: tint }]}>
+            <View key={slot.id} style={[styles.slot, { borderColor: Colors.icon }]}>
               <View style={styles.slotRow}>
                 <View style={styles.slotInfo}>
                   <ThemedText type="defaultSemiBold">{slot.courseLabel}</ThemedText>
@@ -67,7 +66,7 @@ export default function RoutineScreen() {
                   </ThemedText>
                 </View>
                 <Pressable onPress={() => handleDelete(slot.id)} hitSlop={8}>
-                  <IconSymbol size={20} name="trash" color="#e5484d" />
+                  <SvgIcon size={20} name="trash" color="#e5484d" />
                 </Pressable>
               </View>
             </View>
@@ -110,6 +109,7 @@ const styles = StyleSheet.create({
   },
   slot: {
     borderWidth: 1,
+    borderLeftWidth: 5,
     borderRadius: 12,
     padding: 14,
     marginBottom: 10,

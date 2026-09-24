@@ -1,19 +1,19 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { Link } from 'expo-router';
 import { useQueries } from '@tanstack/react-query';
+import { Link } from 'expo-router';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { useCourses } from '@/hooks/useCourses';
 import { useRoutines } from '@/hooks/useRoutines';
-import { useSemesters } from '@/hooks/useSemesters';
-import { useTargets } from '@/hooks/useTargets';
 import { useProfile } from '@/hooks/useUserProfile';
 
-import { Wrapper } from '@/components/ui/Wrapper';
-import { PageHeader } from '@/components/ui/PageHeader';
 import { CourseCard } from '@/components/CourseCard';
 import { ThemedText } from '@/components/ThemedText';
-import { ProgressBar } from '@/components/ui/ProgressBar';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Wrapper } from '@/components/ui/Wrapper';
 
+import { SvgIcon } from '@/components/ui/SvgIcon';
+import { Colors } from '@/constants/theme';
+import { useAllCoursesAttendance } from '@/hooks/useAllCoursesAttendance';
 import { DAY_NAMES } from '@/lib/constants';
 import { parseTime } from '@/lib/validate';
 import { useAuth } from '@/providers/auth-provider';
@@ -24,7 +24,8 @@ export default function HomeScreen() {
   const { profileData } = useProfile();
   const { courses } = useCourses();
   const { slots } = useRoutines();
-  const { targets } = useTargets();
+  const { courseAttendance, sessionsByDate, overall, isLoading } = useAllCoursesAttendance();
+
 
   const progressQueries = useQueries({
     queries: courses.map((course) => ({
@@ -38,7 +39,6 @@ export default function HomeScreen() {
 
   const nextClass = findNextClass(slots);
 
-  const topTargets = targets.slice(0, 3);
 
   return (
     <Wrapper style={styles.safe}>
@@ -63,36 +63,57 @@ export default function HomeScreen() {
         </View>
 
         {courses.length === 0 ? (
-          <ThemedText style={styles.meta}>No courses yet. Add one from the Courses tab.</ThemedText>
+          <View style={{ alignItems: 'center', marginTop: 20 }}>
+            <SvgIcon name="empty" size={200} color={Colors.icon} />
+            <ThemedText style={styles.meta}>No courses yet. Add one from the Courses tab.</ThemedText>
+          </View>
         ) : (
           courses.slice(0, 3).map((course, index) => (
             <CourseCard key={course.id} course={course} assessments={progressQueries[index]?.data} />
           ))
         )}
 
-        {topTargets.length > 0 ? (
-          <>
-            <View style={styles.sectionRow}>
-              <ThemedText type="subtitle">Targets</ThemedText>
-              <Link href="/targets" style={styles.seeAll}>See all</Link>
+        <View style={styles.sectionRow}>
+          <ThemedText type="subtitle">Routine</ThemedText>
+          <Link href="/routine" style={styles.seeAll}>See all</Link>
+        </View>
+
+        {slots.length === 0 ? (
+          <View style={{ alignItems: 'center', marginTop: 20 }}>
+            <SvgIcon name="empty" size={200} color={Colors.icon} />
+            <ThemedText style={styles.meta}>No routine yet. Add one from the Routine tab.</ThemedText>
+          </View>
+        ) : (
+          slots.slice(0, 3).map((slot) => (
+            <View key={`${slot.dayOfWeek}-${slot.startTime}`} style={styles.targetRow}>
+              <ThemedText>{DAY_NAMES[slot.dayOfWeek]} {slot.startTime} – {slot.endTime}</ThemedText>
+              <ThemedText>{slot.courseLabel}</ThemedText>
             </View>
-            {topTargets.map((target) => {
-              const percent =
-                target.targetValue > 0
-                  ? Math.round((target.currentValue / target.targetValue) * 100)
-                  : 0;
-              return (
-                <View key={target.id} style={styles.target}>
-                  <View style={styles.targetRow}>
-                    <ThemedText type="defaultSemiBold">{target.title}</ThemedText>
-                    <ThemedText style={styles.meta}>{percent}%</ThemedText>
-                  </View>
-                  <ProgressBar percent={Math.min(100, Math.max(0, percent))} />
-                </View>
-              );
-            })}
-          </>
-        ) : null}
+          ))
+        )}
+
+        <View style={styles.sectionRow}>
+          <ThemedText type="subtitle">Attendance</ThemedText>
+          <Link href="/attendance" style={styles.seeAll}>See all</Link>
+        </View>
+        {courses.length === 0 ? (
+          <View style={{ alignItems: 'center', marginTop: 20 }}>
+            <SvgIcon name="empty" size={200} color={Colors.icon} />
+            <ThemedText style={styles.meta}>No attendance data yet. Add courses and sessions to track attendance.</ThemedText>
+          </View>
+        ) : (
+          courses.slice(0, 3).map((course) => (
+            <View key={course.id} style={styles.attendanceRow}>
+              <View style={{ ...styles.targetRow, marginBottom: 2 }}>
+                <ThemedText type='defaultSemiBold'>{course.code}</ThemedText>
+                <ThemedText>
+                  {courseAttendance.find((attendance) => attendance.course.id === course.id)?.stats.percent + "%" || 'N/A'}
+                </ThemedText>
+              </View>
+              <ThemedText>{course.title}</ThemedText>
+            </View>
+          ))
+        )}
       </ScrollView>
     </Wrapper>
   );
@@ -177,5 +198,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  attendanceRow: {
+    flexDirection: 'column',
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderBottomWidth: 1,
+    borderLeftWidth: 5,
+    borderColor: Colors.icon,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    marginBottom: 8,
   },
 });

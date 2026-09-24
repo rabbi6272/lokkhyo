@@ -50,6 +50,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#dc2626',
   },
   ghost: {
+    paddingVertical: 0,
+    paddingHorizontal: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: 'transparent',
   },
   pressed: {

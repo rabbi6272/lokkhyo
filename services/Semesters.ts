@@ -34,7 +34,7 @@ export async function getActiveSemester(uid: string): Promise<Semester | null> {
 
 export async function createSemester(
   uid: string,
-  data: Pick<Semester, 'name' | 'targetGpa'>,
+  data: Pick<Semester, 'name' | 'targetGpa' | 'startDate' | 'totalWeeks'>,
 ) {
   const ref = await addDoc(semestersRef(uid), {
     ...data,

@@ -8,6 +8,7 @@ import {
   updateAssessment,
   type NewAssessment,
 } from '@/services/Assessments';
+import { syncAssessmentReminders } from '@/services/notifications/assessmentReminders';
 
 export function useAssessments(courseId: string) {
   const { user } = useAuth();
@@ -28,7 +29,10 @@ export function useAssessments(courseId: string) {
       if (!user) throw new Error('Not authenticated');
       return createAssessment(user.uid, courseId, data);
     },
-    onSuccess: invalidate,
+    onSuccess: () => {
+      invalidate();
+      if (user) void syncAssessmentReminders(user.uid);
+    },
   });
 
   const updateMutation = useMutation({
@@ -36,7 +40,10 @@ export function useAssessments(courseId: string) {
       if (!user) throw new Error('Not authenticated');
       return updateAssessment(user.uid, courseId, id, data);
     },
-    onSuccess: invalidate,
+    onSuccess: () => {
+      invalidate();
+      if (user) void syncAssessmentReminders(user.uid);
+    },
   });
 
   const deleteMutation = useMutation({
@@ -44,7 +51,10 @@ export function useAssessments(courseId: string) {
       if (!user) throw new Error('Not authenticated');
       return deleteAssessment(user.uid, courseId, assessmentId);
     },
-    onSuccess: invalidate,
+    onSuccess: () => {
+      invalidate();
+      if (user) void syncAssessmentReminders(user.uid);
+    },
   });
 
   return {

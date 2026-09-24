@@ -28,7 +28,7 @@ export default function CoursesScreen() {
       <PageHeader
         title="Courses"
         actions={'/course/new' as ExternalPathString}
-        icon="plus.circle.fill"
+        icon="circleAdd"
       />
 
       <ScrollView contentContainerStyle={styles.content}>

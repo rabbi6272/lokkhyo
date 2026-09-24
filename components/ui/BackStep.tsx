@@ -1,6 +1,6 @@
 import { Colors } from "@/constants/theme";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { IconSymbol } from "./icon-symbol";
+import { SvgIcon } from "./SvgIcon";
 
 export function BackStep({ title, onBack }: { title: string; onBack?: () => void }) {
 	return (
@@ -8,7 +8,7 @@ export function BackStep({ title, onBack }: { title: string; onBack?: () => void
 			<View style={styles.content}>
 				{onBack && (
 					<Pressable onPress={onBack} android_ripple={{ color: Colors.icon }}>
-						<IconSymbol name="arrow.left" size={24} color={Colors.text} />
+						<SvgIcon name="arrowLeft" size={22} color={Colors.text} />
 					</Pressable>
 				)}
 

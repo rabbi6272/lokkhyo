@@ -14,6 +14,8 @@ export interface Semester {
   name: string;
   status: SemesterStatus;
   targetGpa: number;
+  startDate: string;
+  totalWeeks: number;
   createdAt: number;
 }
 
@@ -25,10 +27,12 @@ export interface Course {
   credits: number;
   passMarks: number;
   ctWeight: number;
+  isLab: boolean;
+  courseTeachers?: string[];
   createdAt: number;
 }
 
-export type AssessmentType = 'ct' | 'quiz' | 'assignment' | 'lab';
+export type AssessmentType = 'ct' | 'quiz' | 'assignment' | 'labFinal';
 
 export interface Assessment {
   id: string;
@@ -38,6 +42,17 @@ export interface Assessment {
   maxMarks: number;
   weight: number;
   date: string;
+  teacherName?: string;
+  createdAt: number;
+}
+
+export type AttendanceStatus = 'present' | 'absent' | 'cancelled';
+
+export interface AttendanceRecord {
+  id: string;
+  date: string;
+  slotId: string;
+  status: AttendanceStatus;
   createdAt: number;
 }
 

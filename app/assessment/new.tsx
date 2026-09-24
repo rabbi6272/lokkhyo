@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { Field } from '@/components/ui/InputField';
 import { useAssessments } from '@/hooks/useAssessments';
+import { useCourses } from '@/hooks/useCourses';
 import { ASSESSMENT_TYPES, ASSESSMENT_TYPE_LABELS } from '@/lib/constants';
 import type { AssessmentType } from '@/lib/types';
 import { clampMarks, isNumeric, required } from '@/lib/validate';
@@ -15,10 +16,19 @@ import { BackStep } from '@/components/ui/BackStep';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-export default function NewAssessmentScreen() {
-  const { courseId } = useLocalSearchParams<{ courseId: string }>();
+export default function AssessmentFormScreen() {
+  const { courseId, assessmentId } = useLocalSearchParams<{ courseId: string; assessmentId?: string }>();
   const router = useRouter();
-  const { createAssessment } = useAssessments(courseId ?? '');
+  const { courses } = useCourses();
+  const { assessments, createAssessment, updateAssessment } = useAssessments(courseId ?? '');
+
+  const course = courses.find((c) => c.id === courseId);
+  const editingAssessment = assessmentId ? assessments.find((a) => a.id === assessmentId) : undefined;
+  const isEditing = !!assessmentId;
+
+  const availableTypes = course?.isLab
+    ? ASSESSMENT_TYPES
+    : ASSESSMENT_TYPES.filter((t) => t !== 'labFinal');
 
   const [type, setType] = useState<AssessmentType>('ct');
   const [name, setName] = useState('');
@@ -26,7 +36,20 @@ export default function NewAssessmentScreen() {
   const [maxMarks, setMaxMarks] = useState('');
   const [weight, setWeight] = useState('');
   const [date, setDate] = useState(today());
+  const [teacherName, setTeacherName] = useState('');
   const [errors, setErrors] = useState<Record<string, string | null>>({});
+
+  useEffect(() => {
+    if (editingAssessment) {
+      setType(editingAssessment.type);
+      setName(editingAssessment.name);
+      setMarksObtained(String(editingAssessment.marksObtained));
+      setMaxMarks(String(editingAssessment.maxMarks));
+      setWeight(String(editingAssessment.weight));
+      setDate(editingAssessment.date);
+      setTeacherName(editingAssessment.teacherName ?? '');
+    }
+  }, [editingAssessment]);
 
   const handleSubmit = async () => {
     const max = Number(maxMarks);
@@ -45,27 +68,36 @@ export default function NewAssessmentScreen() {
     setErrors(nextErrors);
     if (Object.values(nextErrors).some(Boolean)) return;
 
-    await createAssessment.mutateAsync({
+    const data = {
       type,
       name: name.trim(),
       marksObtained: obtained,
       maxMarks: max,
       weight: Number(weight),
       date: date.trim(),
-    });
+      teacherName: teacherName.trim(),
+    };
+
+    if (isEditing && assessmentId) {
+      await updateAssessment.mutateAsync({ id: assessmentId, data });
+    } else {
+      await createAssessment.mutateAsync(data);
+    }
     router.back();
   };
 
+  const isSaving = createAssessment.isPending || updateAssessment.isPending;
+
   return (
     <>
-      <BackStep title="New Assessment" onBack={() => router.back()} />
+      <BackStep title={isEditing ? 'Edit Assessment' : 'New Assessment'} onBack={() => router.back()} />
       <Wrapper noTopMargin style={styles.flex}>
         <ScrollView keyboardShouldPersistTaps="handled">
 
           <View style={styles.section}>
             <ThemedText type="defaultSemiBold" >Type</ThemedText>
             <View style={styles.chips}>
-              {ASSESSMENT_TYPES.map((t) => (
+              {availableTypes.map((t) => (
                 <Chip
                   key={t}
                   label={ASSESSMENT_TYPE_LABELS[t]}
@@ -129,8 +161,30 @@ export default function NewAssessmentScreen() {
             }}
             error={errors.date}
           />
+          <Field
+            label="Teacher (optional)"
+            placeholder="e.g. Dr. John Doe"
+            value={teacherName}
+            onChangeText={setTeacherName}
+          />
+          {course?.courseTeachers && course.courseTeachers.length > 0 && (
+            <View style={[styles.chips, styles.teacherChips]}>
+              {course.courseTeachers.map((name) => (
+                <Chip
+                  key={name}
+                  label={name}
+                  selected={teacherName === name}
+                  onPress={() => setTeacherName(name)}
+                />
+              ))}
+            </View>
+          )}
 
-          <Button title="Save Assessment" onPress={handleSubmit} loading={createAssessment.isPending} />
+          <Button
+            title={isEditing ? 'Save Changes' : 'Save Assessment'}
+            onPress={handleSubmit}
+            loading={isSaving}
+          />
         </ScrollView>
       </Wrapper>
     </>
@@ -149,5 +203,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+  },
+  teacherChips: {
+    marginTop: -8,
+    marginBottom: 14,
   },
 });

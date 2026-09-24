@@ -1,9 +1,11 @@
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, Alert, Modal, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { Button } from '@/components/ui/Button';
+import { SvgIcon } from '@/components/ui/SvgIcon';
+import { Wrapper } from '@/components/ui/Wrapper';
 import { Colors } from '@/constants/theme';
 import { useSemesters } from '@/hooks/useSemesters';
 import { useProfile } from '@/hooks/useUserProfile';
@@ -33,63 +35,115 @@ export default function ProfileScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-      <View style={{ flex: 1, padding: 16, backgroundColor: '#f1f1f1', justifyContent: 'center' }}>
+    <Wrapper>
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
         <View style={styles.card}>
+          <View style={styles.avatar}>
+            <SvgIcon name="user" size={60} color={Colors.tint} />
+          </View>
           <View style={styles.header}>
-            <ThemedText type="title">{displayName}</ThemedText>
+            <ThemedText type="defaultSemiBold" style={styles.name}>{displayName}</ThemedText>
             <ThemedText style={styles.email}>{user?.email}</ThemedText>
           </View>
-
-          <View style={styles.infoGrid}>
-            <InfoRow label="University" value={profileData?.university || '—'} />
-            <InfoRow label="Department" value={profileData?.department || '—'} />
-            <InfoRow label="Semester" value={currentSemester?.name || '—'} />
-            <InfoRow
-              label="Target CGPA"
-              value={profileData?.targetCgpa ? String(profileData.targetCgpa) : '—'}
-            />
-          </View>
-
-          <Button title="Edit Profile" onPress={() => router.push('/profile/edit')} />
-          <Button title="Sign Out" variant="ghost" onPress={() => setSignoutModalVisible(true)} style={styles.signOut} />
         </View>
-      </View>
 
-      <Modal visible={signoutModalVisible} backdropColor="rgba(0, 0, 0, 0.4)" animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <ThemedText type="title" style={styles.modalTitle}>
-              Sign out?
-            </ThemedText>
-            <ThemedText>
-              Are you sure you want to sign out? You will need to log in again to access your account.
-            </ThemedText>
-            <View style={styles.modalButtons}>
-              <Button title="Cancel" variant="ghost" onPress={() => setSignoutModalVisible(false)} />
-              <Button
-                title="Sign Out"
-                variant="destructive"
-                onPress={async () => {
-                  try {
-                    await signOut();
-                  } catch (error) {
-                    Alert.alert('Error', 'Failed to sign out. Please try again.');
-                  }
-                }}
-              />
+        <View style={styles.listCard}>
+          <MenuRow
+            icon="courses"
+            label="Courses"
+            onPress={() => router.push('/(tabs)/courses')}
+          />
+          <MenuRow
+            icon="routine"
+            label="Routine"
+            onPress={() => router.push('/(tabs)/routine')}
+          />
+          <MenuRow
+            icon="calender"
+            label="Attendance"
+            onPress={() => router.push('/(tabs)/attendance')}
+          />
+          <MenuRow
+            icon="settings"
+            label="Settings"
+            onPress={() => router.push('/settings/settings')}
+          />
+        </View>
+
+        <View style={styles.listCard}>
+          <InfoRow label="University" value={profileData?.university || '—'} />
+          <InfoRow label="Department" value={profileData?.department || '—'} />
+          <InfoRow label="Semester" value={currentSemester?.name || '—'} />
+          <InfoRow label="Target CGPA" value={profileData?.targetCgpa ? String(profileData.targetCgpa) : '—'} last />
+        </View>
+
+        <View style={styles.listCard}>
+          <Pressable
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 14 }}
+            onPress={() => setSignoutModalVisible(true)}>
+            <SvgIcon name="logout" size={22} color="#dc2626" />
+            <ThemedText style={styles.logOutLabel} type='defaultSemiBold'>Log Out</ThemedText>
+          </Pressable>
+        </View>
+
+        <ThemedText style={styles.versionText}>App version 1.0.0</ThemedText>
+
+        <Modal visible={signoutModalVisible} backdropColor="rgba(0, 0, 0, 0.4)" animationType="fade">
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <ThemedText type="title" style={styles.modalTitle}>
+                Sign out?
+              </ThemedText>
+              <ThemedText>
+                Are you sure you want to sign out? You will need to log in again to access your account.
+              </ThemedText>
+              <View style={styles.modalButtons}>
+                <Button title="Cancel" variant="ghost" onPress={() => setSignoutModalVisible(false)} />
+                <Button
+                  title="Sign Out"
+                  variant="destructive"
+                  onPress={async () => {
+                    try {
+                      await signOut();
+                    } catch (error) {
+                      Alert.alert('Error', 'Failed to sign out. Please try again.');
+                    }
+                  }}
+                />
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
-
-    </SafeAreaView>
+        </Modal>
+      </ScrollView>
+    </Wrapper>
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
+function MenuRow({
+  icon,
+  label,
+  onPress,
+  last,
+}: {
+  icon: 'courses' | 'calender' | 'settings' | 'logout' | 'routine';
+  label: string;
+  onPress: () => void;
+  last?: boolean;
+}) {
   return (
-    <View style={styles.infoRow}>
+    <Pressable style={[styles.menuRow, !last && styles.rowDivider]} onPress={onPress}>
+      <View style={styles.menuRowLeft}>
+        <SvgIcon name={icon} size={20} color={Colors.icon} />
+        <ThemedText style={styles.menuLabel}>{label}</ThemedText>
+      </View>
+      <ThemedText style={styles.chevron}>{'>'}</ThemedText>
+    </Pressable>
+  );
+}
+
+function InfoRow({ label, value, last }: { label: string; value: string; last?: boolean }) {
+  return (
+    <View style={[styles.menuRow, !last && styles.rowDivider]}>
       <ThemedText style={styles.infoLabel}>{label}</ThemedText>
       <ThemedText type="defaultSemiBold" style={styles.infoValue}>
         {value}
@@ -99,39 +153,73 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
+  pageTitle: {
+    marginBottom: 16,
+  },
   card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    padding: 12,
+    marginBottom: 16,
     backgroundColor: '#fff',
-    borderRadius: 20,
-    paddingHorizontal: 20,
-    paddingVertical: 40,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 4,
+    borderRadius: 16,
+  },
+  avatar: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: Colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   header: {
-    alignItems: 'center',
-    marginBottom: 28,
+    flex: 1,
     gap: 4,
+    alignItems: 'flex-start',
+  },
+  name: {
+    fontSize: 18,
   },
   email: {
-    opacity: 0.7,
+    opacity: 0.6,
+    fontSize: 13,
+    marginBottom: 8,
+  },
+  editButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 14,
   },
   loadingText: {
     opacity: 0.8,
   },
-  infoGrid: {
-    gap: 16,
-    marginBottom: 28,
+  listCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    marginBottom: 16,
+    paddingHorizontal: 16,
   },
-  infoRow: {
+  menuRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+  },
+  rowDivider: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#e5e5e5',
+  },
+  menuRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  menuLabel: {
+    fontSize: 15,
+  },
+  chevron: {
+    opacity: 0.4,
+    fontSize: 16,
   },
   infoLabel: {
     opacity: 0.6,
@@ -143,55 +231,16 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 16,
   },
-  section: {
-    marginBottom: 16,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  addText: {
-    color: Colors.tint,
+  logOutLabel: {
+    color: '#dc2626',
+    fontSize: 15,
     fontWeight: '600',
   },
-  semesterList: {
-    gap: 8,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  semesterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  deleteBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#fee2e2',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  deleteText: {
-    color: '#dc2626',
-    fontSize: 18,
-    fontWeight: '700',
-    lineHeight: 20,
-  },
-  emptyText: {
-    opacity: 0.5,
-    fontSize: 14,
-  },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 12,
-    marginTop: 8,
-  },
-  signOut: {
-    marginTop: 8,
+  versionText: {
+    textAlign: 'center',
+    opacity: 0.4,
+    fontSize: 12,
+    marginBottom: 24,
   },
   modalOverlay: {
     flex: 1,

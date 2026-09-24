@@ -112,7 +112,7 @@ components/
   themed-*.tsx               Existing themed Text/View wrappers
   course-card.tsx            Reusable course card with progress bar
   ui/
-    button.tsx chip.tsx field.tsx progress-bar.tsx icon-symbol.tsx
+    button.tsx chip.tsx field.tsx progress-bar.tsx 
 constants/theme.ts           Light/dark color tokens
 hooks/                       use-auth, use-profile, use-courses, use-assessments,
                              use-routines, use-targets, use-semesters
