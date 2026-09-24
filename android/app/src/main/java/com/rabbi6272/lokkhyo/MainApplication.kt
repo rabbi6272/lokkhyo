@@ -1,4 +1,4 @@
-package com.rabbi6272.Lokkhyo
+package com.rabbi6272.lokkhyo
 
 import android.app.Application
 import android.content.res.Configuration

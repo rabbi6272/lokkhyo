@@ -9,7 +9,7 @@ import {
 
 import { auth } from '@/lib/firebase';
 
-GoogleOneTapSignIn.configure({ webClientId: 'autoDetect' });
+GoogleOneTapSignIn.configure({ webClientId: "882450675886-0luhlvuahqt1idhhbj1enjd37a1iroaj.apps.googleusercontent.com" });
 
 export function useGoogleSignIn() {
   const signInWithGoogle = useCallback(async (): Promise<User | null> => {
@@ -17,9 +17,11 @@ export function useGoogleSignIn() {
 
     let response = await GoogleOneTapSignIn.signIn();
     if (isNoSavedCredentialFoundResponse(response)) {
+      console.log('No saved credentials found. Prompting user to create an account.');
       response = await GoogleOneTapSignIn.createAccount();
     }
     if (isNoSavedCredentialFoundResponse(response)) {
+      console.log('No saved credentials found. Prompting user to sign in explicitly.');
       response = await GoogleOneTapSignIn.presentExplicitSignIn();
     }
 

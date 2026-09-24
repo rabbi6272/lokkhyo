@@ -27,8 +27,8 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>lokkyo</string>
-          <string>com.anonymous.Lokkhyo</string>
+          <string>lokkhyo</string>
+          <string>com.rabbi6272.lokkhyo</string>
         </array>
       </dict>
       <dict>

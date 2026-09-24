@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.rabbi6272.Lokkhyo'
+    namespace 'com.rabbi6272.lokkhyo'
     defaultConfig {
-        applicationId 'com.rabbi6272.Lokkhyo'
+        applicationId 'com.rabbi6272.lokkhyo'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -180,3 +180,5 @@ dependencies {
         implementation jscFlavor
     }
 }
+
+apply plugin: 'com.google.gms.google-services'

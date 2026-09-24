@@ -39,6 +39,11 @@ target 'Lokkhyo' do
     ]
   end
 
+# @generated begin react-native-nitro-google-signin-google-pods - expo prebuild (DO NOT MODIFY) sync-88b449b75c452cbf27e749e5b5d2a53e7f4bd5d7
+  pod 'AppCheckCore', :modular_headers => true
+  pod 'GoogleUtilities', :modular_headers => true
+  pod 'RecaptchaInterop', :modular_headers => true
+# @generated end react-native-nitro-google-signin-google-pods
   config = use_native_modules!(config_command)
 
   use_frameworks! :linkage => podfile_properties['ios.useFrameworks'].to_sym if podfile_properties['ios.useFrameworks']

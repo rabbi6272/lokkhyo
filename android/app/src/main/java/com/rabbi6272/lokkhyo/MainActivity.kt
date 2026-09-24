@@ -1,4 +1,4 @@
-package com.rabbi6272.Lokkhyo
+package com.rabbi6272.lokkhyo
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

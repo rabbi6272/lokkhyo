@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.rabbi6272.Lokkhyo"
+      "bundleIdentifier": "com.rabbi6272.lokkhyo"
     },
     "android": {
       "adaptiveIcon": {
@@ -17,7 +17,7 @@
         "backgroundColor": "#ffffff"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.rabbi6272.Lokkhyo",
+      "package": "com.rabbi6272.lokkhyo",
       "googleServicesFile": "./google-services.json"
     },
     "plugins": [
@@ -41,7 +41,9 @@
           "defaultChannel": "daily-routine"
         }
       ],
-      "react-native-nitro-google-signin"
+      [
+        "react-native-nitro-google-signin"
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
