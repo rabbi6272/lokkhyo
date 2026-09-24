@@ -1,19 +1,19 @@
-import { useEffect, useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, ToastAndroid, View } from 'react-native';
 import { useNavigation } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, ToastAndroid, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
+import { BackStep } from '@/components/ui/BackStep';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { Field } from '@/components/ui/InputField';
 import { Wrapper } from '@/components/ui/Wrapper';
-import { BackStep } from '@/components/ui/BackStep';
 
+import { SvgIcon } from '@/components/ui/SvgIcon';
 import { Colors } from '@/constants/theme';
 import { useSemesters } from '@/hooks/useSemesters';
 import { useProfile } from '@/hooks/useUserProfile';
 import { gpaRange, isDate, isNumeric, required } from '@/lib/validate';
-import { SvgIcon } from '@/components/ui/SvgIcon';
 
 
 export default function ProfileInfoCard() {
@@ -133,7 +133,7 @@ export default function ProfileInfoCard() {
               <View style={styles.sectionHeader}>
                 <ThemedText style={{ paddingLeft: 8 }} type="defaultSemiBold">Current Semester</ThemedText>
                 <Pressable onPress={() => setModalVisible(true)}>
-                  <ThemedText style={styles.addText}>+ Add</ThemedText>
+                  <ThemedText type='defaultSemiBold' style={styles.addText}>+ Add</ThemedText>
                 </Pressable>
               </View>
               {semesters.length === 0 ? (
@@ -299,7 +299,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   addText: {
-    fontFamily: 'LatoSemiBold',
     color: Colors.tint,
   },
   semesterList: {
@@ -326,13 +325,14 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   emptyText: {
+    paddingLeft: 8,
     opacity: 0.5,
-    fontSize: 14,
+    fontSize: 13,
   },
   actions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: 4,
+    gap: 16,
     marginTop: 8,
   },
   signOut: {

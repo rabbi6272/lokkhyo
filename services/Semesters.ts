@@ -8,7 +8,7 @@ import {
   updateDoc,
   where,
   query,
-} from 'firebase/firestore';
+} from '@react-native-firebase/firestore';
 
 import { db } from '@/lib/firebase';
 import type { Semester } from '@/lib/types';

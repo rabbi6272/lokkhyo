@@ -8,7 +8,7 @@ import {
   query,
   serverTimestamp,
   updateDoc,
-} from 'firebase/firestore';
+} from '@react-native-firebase/firestore';
 
 import { db } from '@/lib/firebase';
 import type { Course } from '@/lib/types';

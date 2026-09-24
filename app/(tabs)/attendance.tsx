@@ -75,7 +75,7 @@ export default function AttendanceScreen() {
 
         {pendingToday.length > 0 && (
           <View style={styles.pendingCard}>
-            <ThemedText type="subtitle" style={styles.pendingTitle}>Mark today's attendance</ThemedText>
+            <ThemedText type="subtitle" style={styles.pendingTitle}>Mark today&apos;s attendance</ThemedText>
             {pendingToday.map((d) => (
               <View key={`${d.courseId}_${d.session.slotId}`} style={styles.pendingRow}>
                 <View style={styles.pendingInfo}>

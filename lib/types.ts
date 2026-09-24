@@ -1,3 +1,5 @@
+import type { Timestamp } from '@react-native-firebase/firestore';
+
 export type SemesterStatus = 'active' | 'archived';
 
 export interface UserProfile {
@@ -6,7 +8,7 @@ export interface UserProfile {
   department: string;
   currentSemesterId: string;
   targetCgpa: number;
-  createdAt?: number;
+  createdAt: Timestamp | null;
 }
 
 export interface Semester {
@@ -16,7 +18,7 @@ export interface Semester {
   targetGpa: number;
   startDate: string;
   totalWeeks: number;
-  createdAt: number;
+  createdAt: Timestamp | null;
 }
 
 export interface Course {
@@ -29,7 +31,7 @@ export interface Course {
   ctWeight: number;
   isLab: boolean;
   courseTeachers?: string[];
-  createdAt: number;
+  createdAt: Timestamp | null;
 }
 
 export type AssessmentType = 'ct' | 'quiz' | 'assignment' | 'labFinal';
@@ -43,7 +45,7 @@ export interface Assessment {
   weight: number;
   date: string;
   teacherName?: string;
-  createdAt: number;
+  createdAt: Timestamp | null;
 }
 
 export type AttendanceStatus = 'present' | 'absent' | 'cancelled';
@@ -53,7 +55,7 @@ export interface AttendanceRecord {
   date: string;
   slotId: string;
   status: AttendanceStatus;
-  createdAt: number;
+  createdAt: Timestamp | null;
 }
 
 export interface RoutineSlot {
@@ -64,7 +66,7 @@ export interface RoutineSlot {
   startTime: string;
   endTime: string;
   room: string;
-  createdAt: number;
+  createdAt: Timestamp | null;
 }
 
 export type TargetType = 'gpa' | 'cgpa' | 'attendance' | 'custom';
@@ -77,5 +79,5 @@ export interface AcademicTarget {
   currentValue: number;
   unit: string;
   targetDate: string;
-  createdAt: number;
+  createdAt: Timestamp | null;
 }

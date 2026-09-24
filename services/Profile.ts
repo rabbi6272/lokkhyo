@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, deleteDoc } from '@react-native-firebase/firestore';
 
 import { db } from '@/lib/firebase';
 import type { UserProfile } from '@/lib/types';

@@ -46,3 +46,9 @@ AGENTS.MD
 CLAUDE.MD
 
 .pnp.*
+
+credentials.json
+google-services.json
+lokkhyo-dev.jks
+android/app/google-services.json
+# android/app/release.jks

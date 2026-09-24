@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "882450675886-tgfmpbsbv482vnhjul9k0lhhdhb2so8u.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rabbi6272.lokkhyo",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
           "client_id": "882450675886-0luhlvuahqt1idhhbj1enjd37a1iroaj.apps.googleusercontent.com",
           "client_type": 3
         }

@@ -1,38 +1,31 @@
-import { GoogleAuthProvider, signInWithCredential, type User } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithCredential } from '@react-native-firebase/auth';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { useCallback } from 'react';
-import {
-  GoogleOneTapSignIn,
-  isCancelledResponse,
-  isNoSavedCredentialFoundResponse,
-  isSuccessResponse,
-} from 'react-native-nitro-google-signin';
+import { Platform } from 'react-native';
 
-import { auth } from '@/lib/firebase';
+import { auth, type User } from '@/lib/firebase';
 
-GoogleOneTapSignIn.configure({ webClientId: "882450675886-0luhlvuahqt1idhhbj1enjd37a1iroaj.apps.googleusercontent.com" });
+GoogleSignin.configure({
+  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+});
 
 export function useGoogleSignIn() {
   const signInWithGoogle = useCallback(async (): Promise<User | null> => {
-    await GoogleOneTapSignIn.checkPlayServices();
-
-    let response = await GoogleOneTapSignIn.signIn();
-    if (isNoSavedCredentialFoundResponse(response)) {
-      console.log('No saved credentials found. Prompting user to create an account.');
-      response = await GoogleOneTapSignIn.createAccount();
-    }
-    if (isNoSavedCredentialFoundResponse(response)) {
-      console.log('No saved credentials found. Prompting user to sign in explicitly.');
-      response = await GoogleOneTapSignIn.presentExplicitSignIn();
+    if (Platform.OS === 'android') {
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
     }
 
-    if (isCancelledResponse(response)) {
-      return null;
-    }
-    if (!isSuccessResponse(response)) {
+    const silent = await GoogleSignin.signInSilently();
+    const response = silent.type === 'success' ? silent : await GoogleSignin.signIn();
+
+    if (response.type !== 'success') {
       return null;
     }
 
-    const { idToken } = response.data;
+    let idToken = response.data.idToken;
+    if (!idToken) {
+      idToken = (await GoogleSignin.getTokens()).idToken;
+    }
     if (!idToken) {
       throw new Error('Google sign-in failed: missing ID token.');
     }

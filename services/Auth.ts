@@ -3,7 +3,7 @@ import {
   deleteUser,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
-} from 'firebase/auth';
+} from '@react-native-firebase/auth';
 
 import { auth } from '@/lib/firebase';
 

@@ -1,5 +1,8 @@
 export function FirebaseError(error: unknown): string {
-    const msg = typeof error === "string" ? error : String(error ?? "");
+    const msg =
+        typeof error === "object" && error !== null && "code" in error && typeof (error as { code?: unknown }).code === "string"
+            ? (error as { code: string }).code
+            : typeof error === "string" ? error : String(error ?? "");
 
     if (msg.includes("auth/invalid-credential")) {
         return "Invalid email or password.";

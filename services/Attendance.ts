@@ -1,4 +1,4 @@
-import { collection, deleteDoc, doc, getDocs, serverTimestamp, setDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDocs, serverTimestamp, setDoc } from '@react-native-firebase/firestore';
 
 import { db } from '@/lib/firebase';
 import type { AttendanceRecord, AttendanceStatus } from '@/lib/types';

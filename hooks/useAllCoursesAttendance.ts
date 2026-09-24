@@ -61,8 +61,7 @@ export function useAllCoursesAttendance() {
       const stats = computeAttendanceStats(sessions);
       return { course, sessions, stats };
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courses, semesters, slots, ...attendanceQueries.map((q) => q.data)]);
+  }, [courses, semesters, slots, attendanceQueries]);
 
   const sessionsByDate = useMemo(() => {
     const map = new Map<string, DaySession[]>();
