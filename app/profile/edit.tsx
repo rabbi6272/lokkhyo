@@ -13,7 +13,7 @@ import { SvgIcon } from '@/components/ui/SvgIcon';
 import { Colors } from '@/constants/theme';
 import { useSemesters } from '@/hooks/useSemesters';
 import { useProfile } from '@/hooks/useUserProfile';
-import { gpaRange, isDate, isNumeric, required } from '@/lib/validate';
+import { gpaRange, required } from '@/lib/validate';
 
 
 export default function ProfileInfoCard() {

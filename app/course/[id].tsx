@@ -11,7 +11,8 @@ import { useAllCoursesAttendance } from '@/hooks/useAllCoursesAttendance';
 import { useAssessments } from '@/hooks/useAssessments';
 import { useCourses } from '@/hooks/useCourses';
 import { ASSESSMENT_TYPE_LABELS } from '@/lib/constants';
-import { courseProgress } from '@/lib/gpa';
+import { courseProgress, weightedPercent } from '@/lib/gpa';
+
 
 export default function CourseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -66,78 +67,105 @@ export default function CourseDetailScreen() {
           )}
         </View>
 
-        <View style={styles.summary}>
-          <View style={styles.summaryRow}>
-            <ThemedText type="subtitle">Progress</ThemedText>
-            <ThemedText style={styles.percent}>{percent}%</ThemedText>
-          </View>
-          <ProgressBar percent={percent} />
-          <ThemedText style={styles.meta}>
-            {max > 0 ? `${obtained} / ${max} marks across ${assessments.length} assessment(s)` : 'No assessments recorded yet.'}
-          </ThemedText>
-        </View>
-
         <View style={styles.row}>
           <ThemedText type="subtitle">Assessments</ThemedText>
           <Button
-            title="+Add"
-            variant="ghost"
-            onPress={() => router.push(`/assessment/new?courseId=${course?.id}`)}
+            title="Add"
+            onPress={() => router.push(`/assessment/new?courseId=${course.id}`)}
+            style={styles.addButton}
           />
         </View>
 
         {isAssessmentsLoading ? (
           <ThemedText>Loading assessments…</ThemedText>
         ) : assessments.length === 0 ? (
-          <View style={{ alignItems: 'center', marginTop: 10 }}>
-            <SvgIcon name="empty" size={200} color={Colors.icon} />
-            <ThemedText style={styles.meta}>No assessments yet. Add your first CT mark.</ThemedText>
-            <Button
-              style={{ marginTop: 10 }}
-              title="+Add"
-              variant="ghost"
-              onPress={() => router.push(`/assessment/new?courseId=${course?.id}`)}
-            />
-          </View>
+          <ThemedText style={styles.empty}>No assessments yet. Add your first CT mark.</ThemedText>
         ) : (
-          assessments.map((a) => (
-            <Pressable
-              key={a.id}
-              style={[styles.assessment, { borderColor: Colors.icon }]}
-              onPress={() => router.push(`/assessment/new?courseId=${course?.id}&assessmentId=${a.id}`)}>
-              <View style={styles.assessmentRow}>
-                <View style={styles.assessmentInfo}>
-                  <ThemedText type="defaultSemiBold">
-                    {a.name} <ThemedText style={styles.meta}>· {ASSESSMENT_TYPE_LABELS[a.type]}</ThemedText>
-                  </ThemedText>
-                  <ThemedText style={styles.meta}>
-                    {a.marksObtained} / {a.maxMarks} · weight {a.weight}% · {a.date}
-                    {a.teacherName ? ` · ${a.teacherName}` : ''}
-                  </ThemedText>
-                </View>
-                <Pressable onPress={() => handleDelete(a.id, a.name)} hitSlop={8}>
-                  <SvgIcon size={20} name="trash" color="#e5484d" />
-                </Pressable>
+          {
+            assessments.map((a) => (
+          <View key={a.id} style={[styles.assessment, { borderColor: Colors.icon }]}>
+            <View style={styles.assessmentRow}>
+              <View style={styles.assessmentInfo}>
+                <ThemedText type="defaultSemiBold">
+                  {a.name} <ThemedText style={styles.meta}>· {ASSESSMENT_TYPE_LABELS[a.type]}</ThemedText>
+                </ThemedText>
+                <ThemedText style={styles.meta}>
+                  {a.marksObtained} / {a.maxMarks} · weight {a.weight}% · {a.date}
+                </ThemedText>
               </View>
-            </Pressable>
-          ))
-        )}
-
-        <Pressable
-          style={[styles.attendanceLink, { marginTop: 24 }]}
-          onPress={() => router.push('/(tabs)/attendance')}>
-          <View>
-            <ThemedText type="subtitle">Attendance</ThemedText>
-            <ThemedText style={styles.meta}>
-              {attendanceStats && attendanceStats.held > 0
-                ? `${attendanceStats.percent}% · mark ${attendanceStats.mark}/10${!attendanceStats.eligible ? ' · below eligibility' : ''}`
-                : 'No sessions recorded yet'}
-            </ThemedText>
+              <Pressable onPress={() => handleDelete(a.id, a.name)} hitSlop={8}>
+                <SvgIcon size={20} name="trash" color="#e5484d" />
+              </Pressable>
+            </View>
           </View>
-          <ThemedText style={styles.chevron}>{'>'}</ThemedText>
-        </Pressable>
-      </ScrollView>
-    </Wrapper>
+          <ProgressBar percent={percent} />
+          <ThemedText style={styles.meta}>
+            {max > 0 ? `${obtained} / ${max} marks across ${assessments.length} assessment(s)` : 'No assessments recorded yet.'}
+          </ThemedText>
+            ))
+          }
+
+          < View style={styles.row}>
+        <ThemedText type="subtitle">Assessments</ThemedText>
+        <Button
+          title="+Add"
+          variant="ghost"
+          onPress={() => router.push(`/assessment/new?courseId=${course?.id}`)}
+        />
+      </View>
+
+      {isAssessmentsLoading ? (
+        <ThemedText>Loading assessments…</ThemedText>
+      ) : assessments.length === 0 ? (
+        <View style={{ alignItems: 'center', marginTop: 10 }}>
+          <SvgIcon name="empty" size={200} color={Colors.icon} />
+          <ThemedText style={styles.meta}>No assessments yet. Add your first CT mark.</ThemedText>
+          <Button
+            style={{ marginTop: 10 }}
+            title="+Add"
+            variant="ghost"
+            onPress={() => router.push(`/assessment/new?courseId=${course?.id}`)}
+          />
+        </View>
+      ) : (
+        assessments.map((a) => (
+          <Pressable
+            key={a.id}
+            style={[styles.assessment, { borderColor: Colors.icon }]}
+            onPress={() => router.push(`/assessment/new?courseId=${course?.id}&assessmentId=${a.id}`)}>
+            <View style={styles.assessmentRow}>
+              <View style={styles.assessmentInfo}>
+                <ThemedText type="defaultSemiBold">
+                  {a.name} <ThemedText style={styles.meta}>· {ASSESSMENT_TYPE_LABELS[a.type]}</ThemedText>
+                </ThemedText>
+                <ThemedText style={styles.meta}>
+                  {a.marksObtained} / {a.maxMarks} · weight {a.weight}% · {a.date}
+                  {a.teacherName ? ` · ${a.teacherName}` : ''}
+                </ThemedText>
+              </View>
+              <Pressable onPress={() => handleDelete(a.id, a.name)} hitSlop={8}>
+                <SvgIcon size={20} name="trash" color="#e5484d" />
+              </Pressable>
+            </View>
+          </Pressable>
+        ))
+      )}
+
+      <Pressable
+        style={[styles.attendanceLink, { marginTop: 24 }]}
+        onPress={() => router.push('/(tabs)/attendance')}>
+        <View>
+          <ThemedText type="subtitle">Attendance</ThemedText>
+          <ThemedText style={styles.meta}>
+            {attendanceStats && attendanceStats.held > 0
+              ? `${attendanceStats.percent}% · mark ${attendanceStats.mark}/10${!attendanceStats.eligible ? ' · below eligibility' : ''}`
+              : 'No sessions recorded yet'}
+          </ThemedText>
+        </View>
+        <ThemedText style={styles.chevron}>{'>'}</ThemedText>
+      </Pressable>
+    </ScrollView>
+    </Wrapper >
   );
 }
 
