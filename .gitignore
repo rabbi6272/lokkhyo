@@ -65,3 +65,7 @@ android/app/*.jks
 android/app/*.keystore
 
 yarn.lock
+
+android/
+ios/
+
