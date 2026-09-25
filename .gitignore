@@ -51,4 +51,17 @@ credentials.json
 google-services.json
 lokkhyo-dev.jks
 android/app/google-services.json
-# android/app/release.jks
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+
+# Keystores
+*.jks
+*.keystore
+android/app/*.jks
+android/app/*.keystore
+
+yarn.lock
