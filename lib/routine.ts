@@ -44,7 +44,7 @@ export function normalizeRoutineSlot(raw: Partial<RoutineSlot> & { id: string })
     startTime: raw.startTime.trim(),
     endTime: typeof raw.endTime === 'string' ? raw.endTime.trim() : raw.startTime.trim(),
     room: typeof raw.room === 'string' ? raw.room.trim() : '',
-    createdAt: typeof raw.createdAt === 'number' ? raw.createdAt : 0,
+    createdAt: raw.createdAt ?? null,
   };
 }
 

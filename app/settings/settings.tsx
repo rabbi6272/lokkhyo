@@ -153,7 +153,7 @@ export default function SettingsScreen() {
 
           <View style={styles.listCard}>
             <Pressable style={styles.menuRow} onPress={() => setDeleteModalVisible(true)}>
-              <ThemedText style={styles.dangerLabel}>Delete Account</ThemedText>
+              <ThemedText type='defaultSemiBold' style={styles.dangerLabel}>Delete Account</ThemedText>
             </Pressable>
           </View>
 
@@ -186,7 +186,7 @@ export default function SettingsScreen() {
             </View>
           </Modal>
 
-          <Modal visible={timeModalVisible} backdropColor="rgba(0, 0, 0, 0.4)" animationType="fade" transparent onRequestClose={() => setTimeModalVisible(false)}>
+          <Modal visible={timeModalVisible} backdropColor="rgba(0, 0, 0, 0.4)" animationType="fade" onRequestClose={() => setTimeModalVisible(false)}>
             <Pressable style={styles.modalOverlay} onPress={() => setTimeModalVisible(false)}>
               <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
                 <ThemedText type="title" style={styles.modalTitle}>
@@ -338,7 +338,6 @@ const styles = StyleSheet.create({
   dangerLabel: {
     color: '#dc2626',
     fontSize: 15,
-    fontWeight: '600',
   },
   versionText: {
     textAlign: 'center',

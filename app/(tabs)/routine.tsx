@@ -14,7 +14,6 @@ import { SvgIcon } from '@/components/ui/SvgIcon';
 
 export default function RoutineScreen() {
   const { slots, isLoading, deleteRoutineSlot } = useRoutines();
-  const tint = Colors.tint;
 
   const [selectedDay, setSelectedDay] = useState<number>(new Date().getDay());
 
@@ -57,7 +56,7 @@ export default function RoutineScreen() {
           <ThemedText style={styles.empty}>No classes on {DAY_NAMES[selectedDay]}.</ThemedText>
         ) : (
           daySlots.map((slot) => (
-            <View key={slot.id} style={[styles.slot, { borderColor: tint }]}>
+            <View key={slot.id} style={[styles.slot, { borderColor: Colors.icon }]}>
               <View style={styles.slotRow}>
                 <View style={styles.slotInfo}>
                   <ThemedText type="defaultSemiBold">{slot.courseLabel}</ThemedText>
@@ -110,6 +109,7 @@ const styles = StyleSheet.create({
   },
   slot: {
     borderWidth: 1,
+    borderLeftWidth: 5,
     borderRadius: 12,
     padding: 14,
     marginBottom: 10,

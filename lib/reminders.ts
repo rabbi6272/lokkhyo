@@ -1,4 +1,5 @@
 import type { AssessmentType } from '@/lib/types';
+import { DAY_NAMES, DAY_SHORT_NAMES, MONTH_NAMES } from '@/lib/constants';
 
 export interface AssessmentReminder {
   assessmentId: string;
@@ -13,10 +14,10 @@ const REMINDER_LEAD_DAYS: Partial<Record<AssessmentType, number>> = {
   ct: 2,
   assignment: 2,
   quiz: 3,
-  lab: 3,
+  labFinal: 5,
 };
 
-const REMINDER_TYPES: AssessmentType[] = ['ct', 'assignment', 'quiz', 'lab'];
+const REMINDER_TYPES: AssessmentType[] = ['ct', 'assignment', 'quiz', 'labFinal'];
 
 export function isReminderType(type: string): type is AssessmentType {
   return REMINDER_TYPES.includes(type as AssessmentType);
@@ -114,9 +115,7 @@ export function formatDateLabel(dateStr: string): string {
   const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
   if (Number.isNaN(d.getTime())) return dateStr;
 
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`;
+  return `${DAY_SHORT_NAMES[d.getDay()]}, ${MONTH_NAMES[d.getMonth()]} ${d.getDate()}`;
 }
 
 /**
@@ -126,7 +125,7 @@ const REMINDER_TITLES: Record<AssessmentType, string> = {
   ct: 'CT Reminder 📝',
   assignment: 'Assignment Reminder 📝',
   quiz: 'Quiz Reminder 📝',
-  lab: 'Lab Reminder 📝',
+  labFinal: 'Lab Final Reminder 📝',
 };
 
 /**
@@ -156,10 +155,10 @@ export function buildAssessmentReminderContent(
         title,
         body: `${label} has a quiz on ${dateLabel}. Tap to view details.`,
       };
-    case 'lab':
+    case 'labFinal':
       return {
         title,
-        body: `${label} has a lab on ${dateLabel}. Tap to view details.`,
+        body: `${label} has a lab final on ${dateLabel}. Tap to view details.`,
       };
     default:
       return {

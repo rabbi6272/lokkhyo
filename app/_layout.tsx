@@ -20,8 +20,6 @@ function RootNavigator() {
   useScheduledNotifications();
 
   const [loaded] = useFonts({
-    'LatoRegular': require('../assets/fonts/Lato-Regular.ttf'),
-    'LatoSemiBold': require('../assets/fonts/Lato-SemiBold.ttf'),
     'InterRegular': require('../assets/fonts/Inter-Regular.ttf'),
     'InterMedium': require('../assets/fonts/Inter-Medium.ttf'),
     'InterSemiBold': require('../assets/fonts/Inter-SemiBold.ttf')
@@ -46,6 +44,7 @@ function RootNavigator() {
         <Stack.Screen name="assessment/new" options={{ headerShown: false }} />
         <Stack.Screen name="routine/new" options={{ headerShown: false }} />
         <Stack.Screen name="target/new" options={{ headerShown: false }} />
+        <Stack.Screen name="targets" options={{ headerShown: false }} />
         <Stack.Screen name="profile/edit" options={{ headerShown: false }} />
         <Stack.Screen name="settings/settings" options={{ headerShown: false }} />
       </Stack.Protected>

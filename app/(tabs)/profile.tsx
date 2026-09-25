@@ -54,15 +54,14 @@ export default function ProfileScreen() {
             onPress={() => router.push('/(tabs)/courses')}
           />
           <MenuRow
-            icon="calendar"
+            icon="routine"
             label="Routine"
             onPress={() => router.push('/(tabs)/routine')}
           />
           <MenuRow
-            icon="targets"
-            label="Targets"
-            onPress={() => router.push('/(tabs)/targets')}
-            last
+            icon="calender"
+            label="Attendance"
+            onPress={() => router.push('/(tabs)/attendance')}
           />
           <MenuRow
             icon="settings"
@@ -126,7 +125,7 @@ function MenuRow({
   onPress,
   last,
 }: {
-  icon: 'courses' | 'calendar' | 'targets' | 'settings' | 'logout';
+  icon: 'courses' | 'calender' | 'settings' | 'logout' | 'routine';
   label: string;
   onPress: () => void;
   last?: boolean;

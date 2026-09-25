@@ -23,7 +23,24 @@ export default function NewCourseScreen() {
   const [credits, setCredits] = useState('');
   const [passMarks, setPassMarks] = useState('');
   const [ctWeight, setCtWeight] = useState('');
+  const [teacherInput, setTeacherInput] = useState('');
+  const [teachers, setTeachers] = useState<string[]>([]);
+  const [isLab, setIsLab] = useState(false);
   const [errors, setErrors] = useState<Record<string, string | null>>({});
+
+  const handleAddTeacher = () => {
+    const name = teacherInput.trim();
+    if (!name || teachers.includes(name)) {
+      setTeacherInput('');
+      return;
+    }
+    setTeachers((t) => [...t, name]);
+    setTeacherInput('');
+  };
+
+  const handleRemoveTeacher = (name: string) => {
+    setTeachers((t) => t.filter((x) => x !== name));
+  };
 
   const handleSubmit = async () => {
     const nextErrors: Record<string, string | null> = {
@@ -31,8 +48,8 @@ export default function NewCourseScreen() {
       code: required(code, 'Course code'),
       title: required(title, 'Course title'),
       credits: isNumeric(credits, 'Credits'),
-      passMarks: isNumeric(passMarks, 'Pass marks'),
-      ctWeight: isNumeric(ctWeight, 'CT weight'),
+      passMarks: isLab ? null : isNumeric(passMarks, 'Pass marks'),
+      ctWeight: isLab ? null : isNumeric(ctWeight, 'CT weight'),
     };
     setErrors(nextErrors);
     if (Object.values(nextErrors).some(Boolean)) return;
@@ -44,6 +61,8 @@ export default function NewCourseScreen() {
       credits: Number(credits),
       passMarks: Number(passMarks),
       ctWeight: Number(ctWeight),
+      isLab,
+      courseTeachers: teachers,
     });
     router.back();
   };
@@ -69,6 +88,14 @@ export default function NewCourseScreen() {
               ))}
             </ScrollView>
             {errors.semesterId && <Text style={styles.error}>{errors.semesterId}</Text>}
+          </View>
+
+          <View style={styles.section}>
+            <ThemedText type="defaultSemiBold" style={{ paddingLeft: 8 }}>Course type</ThemedText>
+            <View style={styles.chips}>
+              <Chip label="Theory" selected={!isLab} onPress={() => setIsLab(false)} />
+              <Chip label="Lab" selected={isLab} onPress={() => setIsLab(true)} />
+            </View>
           </View>
 
           <Field
@@ -103,28 +130,59 @@ export default function NewCourseScreen() {
             }}
             error={errors.credits}
           />
-          <Field
-            label="Pass marks (out of 100)"
-            placeholder="e.g. 40"
-            keyboardType="numeric"
-            value={passMarks}
-            onChangeText={(v) => {
-              setPassMarks(v);
-              setErrors((e) => ({ ...e, passMarks: null }));
-            }}
-            error={errors.passMarks}
-          />
-          <Field
-            label="CT weight (% of final grade)"
-            placeholder="e.g. 30"
-            keyboardType="numeric"
-            value={ctWeight}
-            onChangeText={(v) => {
-              setCtWeight(v);
-              setErrors((e) => ({ ...e, ctWeight: null }));
-            }}
-            error={errors.ctWeight}
-          />
+          <View style={styles.section}>
+            <Field
+              label="Course teacher(s)"
+              placeholder="e.g. Dr. John Doe"
+              value={teacherInput}
+              onChangeText={setTeacherInput}
+              onSubmitEditing={handleAddTeacher}
+              returnKeyType="done"
+            />
+            <Button
+              title="+ Add"
+              variant="ghost"
+              onPress={handleAddTeacher}
+              style={styles.addTeacherButton}
+            />
+            {teachers.length > 0 && (
+              <>
+                <View style={styles.chips}>
+                  {teachers.map((name) => (
+                    <Chip key={name} label={name} selected onPress={() => handleRemoveTeacher(name)} />
+                  ))}
+                </View>
+                <Text style={styles.hint}>Tap a name to remove it.</Text>
+              </>
+            )}
+          </View>
+
+          {!isLab && (
+            <>
+              <Field
+                label="Pass marks (out of 100)"
+                placeholder="e.g. 40"
+                keyboardType="numeric"
+                value={passMarks}
+                onChangeText={(v) => {
+                  setPassMarks(v);
+                  setErrors((e) => ({ ...e, passMarks: null }));
+                }}
+                error={errors.passMarks}
+              />
+              <Field
+                label="CT weight (% of final grade)"
+                placeholder="e.g. 30"
+                keyboardType="numeric"
+                value={ctWeight}
+                onChangeText={(v) => {
+                  setCtWeight(v);
+                  setErrors((e) => ({ ...e, ctWeight: null }));
+                }}
+                error={errors.ctWeight}
+              />
+            </>
+          )}
 
           <Button title="Create Course" onPress={handleSubmit} loading={createCourse.isPending} />
         </ScrollView>
@@ -140,6 +198,23 @@ const styles = StyleSheet.create({
   section: {
     gap: 8,
     marginBottom: 16,
+  },
+  chips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  addTeacherButton: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginTop: -8,
+    marginBottom: 8,
+  },
+  hint: {
+    opacity: 0.5,
+    fontSize: 12,
+    marginTop: 6,
   },
   error: {
     color: '#e5484d',

@@ -21,7 +21,7 @@ export function CourseCard({ course, assessments = [] }: CourseCardProps) {
       onPress={() => router.push(`/course/${course.id}`)}
       style={({ pressed }) => [styles.card, { borderColor: Colors.icon }, pressed && styles.pressed]}>
       <View style={styles.row}>
-        <ThemedText type="subtitle">{course.code}</ThemedText>
+        <ThemedText type="defaultSemiBold">{course.code}</ThemedText>
         <ThemedText style={styles.credits}>{course.credits} cr</ThemedText>
       </View>
       <ThemedText style={styles.title} numberOfLines={1}>
@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
     borderLeftWidth: 5,
-    borderRadius: 16,
+    borderRadius: 12,
     padding: 16,
     marginBottom: 8,
   },

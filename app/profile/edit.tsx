@@ -1,19 +1,19 @@
-import { useEffect, useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, ToastAndroid, View } from 'react-native';
 import { useNavigation } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, ToastAndroid, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
+import { BackStep } from '@/components/ui/BackStep';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { Field } from '@/components/ui/InputField';
 import { Wrapper } from '@/components/ui/Wrapper';
-import { BackStep } from '@/components/ui/BackStep';
 
+import { SvgIcon } from '@/components/ui/SvgIcon';
 import { Colors } from '@/constants/theme';
 import { useSemesters } from '@/hooks/useSemesters';
 import { useProfile } from '@/hooks/useUserProfile';
 import { gpaRange, required } from '@/lib/validate';
-import { SvgIcon } from '@/components/ui/SvgIcon';
 
 
 export default function ProfileInfoCard() {
@@ -30,6 +30,8 @@ export default function ProfileInfoCard() {
   const [modalVisible, setModalVisible] = useState(false);
   const [newSemName, setNewSemName] = useState('');
   const [newSemGpa, setNewSemGpa] = useState('');
+  const [newSemStartDate, setNewSemStartDate] = useState('');
+  const [newSemTotalWeeks, setNewSemTotalWeeks] = useState('13');
   const [newSemErrors, setNewSemErrors] = useState<Record<string, string | null>>({});
 
   useEffect(() => {
@@ -69,8 +71,11 @@ export default function ProfileInfoCard() {
   };
 
   const handleCreateSemester = async () => {
+    const totalWeeks = Number(newSemTotalWeeks);
     const nextErrors: Record<string, string | null> = {
       name: required(newSemName, 'Semester name'),
+      startDate: required(newSemStartDate, 'Start date') || isDate(newSemStartDate),
+      totalWeeks: isNumeric(newSemTotalWeeks, 'Total weeks') || (totalWeeks <= 0 ? 'Total weeks must be positive.' : null),
     };
     const gpa = Number(newSemGpa);
     if (newSemGpa.trim()) {
@@ -84,10 +89,14 @@ export default function ProfileInfoCard() {
     const id = await createSemester.mutateAsync({
       name: newSemName.trim(),
       targetGpa: newSemGpa.trim() ? gpa : 0,
+      startDate: newSemStartDate.trim(),
+      totalWeeks,
     });
     setCurrentSemesterId(id);
     setNewSemName('');
     setNewSemGpa('');
+    setNewSemStartDate('');
+    setNewSemTotalWeeks('13');
     setModalVisible(false);
   };
 
@@ -124,7 +133,7 @@ export default function ProfileInfoCard() {
               <View style={styles.sectionHeader}>
                 <ThemedText style={{ paddingLeft: 8 }} type="defaultSemiBold">Current Semester</ThemedText>
                 <Pressable onPress={() => setModalVisible(true)}>
-                  <ThemedText style={styles.addText}>+ Add</ThemedText>
+                  <ThemedText type='defaultSemiBold' style={styles.addText}>+ Add</ThemedText>
                 </Pressable>
               </View>
               {semesters.length === 0 ? (
@@ -179,6 +188,27 @@ export default function ProfileInfoCard() {
                     onChangeText={setNewSemGpa}
                     error={newSemErrors.targetGpa}
                   />
+                  <Field
+                    label="Start date (YYYY-MM-DD)"
+                    placeholder="2026-01-04"
+                    value={newSemStartDate}
+                    onChangeText={(v) => {
+                      setNewSemStartDate(v);
+                      setNewSemErrors((e) => ({ ...e, startDate: null }));
+                    }}
+                    error={newSemErrors.startDate}
+                  />
+                  <Field
+                    label="Total weeks"
+                    placeholder="13"
+                    keyboardType="numeric"
+                    value={newSemTotalWeeks}
+                    onChangeText={(v) => {
+                      setNewSemTotalWeeks(v);
+                      setNewSemErrors((e) => ({ ...e, totalWeeks: null }));
+                    }}
+                    error={newSemErrors.totalWeeks}
+                  />
                   <View style={styles.modalButtons}>
                     <Button
                       title="Cancel"
@@ -187,6 +217,8 @@ export default function ProfileInfoCard() {
                         setModalVisible(false);
                         setNewSemName('');
                         setNewSemGpa('');
+                        setNewSemStartDate('');
+                        setNewSemTotalWeeks('13');
                         setNewSemErrors({});
                       }}
                     />
@@ -267,7 +299,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   addText: {
-    fontFamily: 'LatoSemiBold',
     color: Colors.tint,
   },
   semesterList: {
@@ -294,13 +325,14 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   emptyText: {
+    paddingLeft: 8,
     opacity: 0.5,
-    fontSize: 14,
+    fontSize: 13,
   },
   actions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: 4,
+    gap: 16,
     marginTop: 8,
   },
   signOut: {

@@ -30,13 +30,13 @@ export function ThemedText({
 
 const styles = StyleSheet.create({
   default: {
-    fontFamily: 'LatoRegular',
+    fontFamily: 'InterRegular',
     fontSize: 14,
     lineHeight: 20,
   },
   defaultSemiBold: {
-    fontFamily: 'LatoSemiBold',
-    fontSize: 14,
+    fontFamily: 'InterSemiBold',
+    fontSize: 15,
     lineHeight: 20,
   },
   title: {

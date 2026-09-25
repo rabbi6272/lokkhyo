@@ -12,18 +12,23 @@ import {
 import { ThemedText } from '@/components/ThemedText';
 import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/InputField';
+import { GoogleButton } from '@/components/ui/GoogleButton';
+import { OrDivider } from '@/components/ui/OrDivider';
+import { useGoogleSignIn } from '@/hooks/useGoogleSignIn';
 import { signUp } from '@/services/Auth';
 import { FirebaseError } from '@/services/FirebaseError';
-import { createProfile } from '@/services/Profile';
-import { createSemester } from '@/services/Semesters';
+import { createProfile, getProfile } from '@/services/Profile';
+import { createSemester, listSemesters } from '@/services/Semesters';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SignupScreen() {
+  const { signInWithGoogle } = useGoogleSignIn();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const handleSubmit = async () => {
     if (!fullName.trim() || !email.trim() || password.length < 6) {
@@ -35,11 +40,46 @@ export default function SignupScreen() {
     try {
       const user = await signUp(email.trim(), password);
       await createProfile(user.uid, { fullName: fullName.trim() });
-      await createSemester(user.uid, { name: 'Semester 1', targetGpa: 4 });
+      await createSemester(user.uid, {
+        name: 'Semester 1',
+        targetGpa: 4,
+        startDate: new Date().toISOString().slice(0, 10),
+        totalWeeks: 13,
+      });
     } catch (e) {
       setError(FirebaseError((e as any).code));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogle = async () => {
+    setError('');
+    setGoogleLoading(true);
+    try {
+      const googleUser = await signInWithGoogle();
+      if (!googleUser) return;
+
+      const profile = await getProfile(googleUser.uid);
+      if (!profile) {
+        await createProfile(googleUser.uid, {
+          fullName: googleUser.displayName ?? '',
+        });
+      }
+
+      const semesters = await listSemesters(googleUser.uid);
+      if (semesters.length === 0) {
+        await createSemester(googleUser.uid, {
+          name: 'Semester 1',
+          targetGpa: 4,
+          startDate: new Date().toISOString().slice(0, 10),
+          totalWeeks: 13,
+        });
+      }
+    } catch (e) {
+      setError(FirebaseError((e as any)?.code ?? e));
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -88,6 +128,10 @@ export default function SignupScreen() {
             {error ? <Text style={styles.error}>{error}</Text> : null}
 
             <Button title="Sign Up" onPress={handleSubmit} loading={loading} />
+
+            <OrDivider />
+
+            <GoogleButton onPress={handleGoogle} loading={googleLoading} />
 
             <ThemedText style={styles.footer}>
               Already have an account? <Link href="/login" style={styles.link}>Sign in</Link>

@@ -25,24 +25,19 @@ expo-env.d.ts
 npm-debug.*
 yarn-debug.*
 yarn-error.*
-
+yarn.lock
 # macOS
 .DS_Store
 *.pem
 
 # local env files
 .env
-.env*.local
+.env*
 
 # typescript
 *.tsbuildinfo
 
 app-example
-
-# generated native folders
-/ios
-/android
-
 
 .claude/
 .vscode/
@@ -51,3 +46,27 @@ AGENTS.MD
 CLAUDE.MD
 
 .pnp.*
+
+credentials.json
+google-services.json
+lokkhyo-dev.jks
+android/app/google-services.json
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+
+# Keystores
+*.jks
+*.keystore
+android/app/*.jks
+android/app/*.keystore
+
+yarn.lock
+
+android/
+ios/
+/android/
+/ios/

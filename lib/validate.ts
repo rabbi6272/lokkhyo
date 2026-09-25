@@ -21,6 +21,13 @@ export function gpaRange(value: number): ValidationResult {
   return null;
 }
 
+export function isDate(value: string): ValidationResult {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value.trim())) {
+    return 'Date must be in YYYY-MM-DD format.';
+  }
+  return null;
+}
+
 export function isTime(value: string): ValidationResult {
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(value.trim())) {
     return 'Time must be in HH:MM (24h) format.';

@@ -7,7 +7,7 @@ import {
   orderBy,
   serverTimestamp,
   updateDoc,
-} from 'firebase/firestore';
+} from '@react-native-firebase/firestore';
 
 import { db } from '@/lib/firebase';
 import type { RoutineSlot } from '@/lib/types';

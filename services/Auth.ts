@@ -1,8 +1,9 @@
 import {
   createUserWithEmailAndPassword,
+  deleteUser,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
-} from 'firebase/auth';
+} from '@react-native-firebase/auth';
 
 import { auth } from '@/lib/firebase';
 
@@ -18,4 +19,9 @@ export async function signIn(email: string, password: string) {
 
 export async function signOut() {
   await firebaseSignOut(auth);
+}
+
+export async function deleteAccount() {
+  if (!auth.currentUser) throw new Error('Not authenticated');
+  await deleteUser(auth.currentUser);
 }
