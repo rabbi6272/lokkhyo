@@ -9,6 +9,7 @@ import { Field } from '@/components/ui/InputField';
 import { useCourses } from '@/hooks/useCourses';
 import { useRoutines } from '@/hooks/useRoutines';
 import { DAY_NAMES, DAY_SHORT_NAMES } from '@/lib/constants';
+import { getTodayOfWeek } from '@/lib/routine';
 import { isTime, parseTime } from '@/lib/validate';
 import { Wrapper } from '@/components/ui/Wrapper';
 import { BackStep } from '@/components/ui/BackStep';
@@ -18,7 +19,7 @@ export default function NewRoutineSlotScreen() {
   const { createRoutineSlot } = useRoutines();
   const { courses } = useCourses();
 
-  const [dayOfWeek, setDayOfWeek] = useState<number>(new Date().getDay());
+  const [dayOfWeek, setDayOfWeek] = useState<number>(getTodayOfWeek());
   const [courseId, setCourseId] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');

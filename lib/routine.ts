@@ -2,21 +2,29 @@ import type { RoutineSlot } from '@/lib/types';
 import { parseTime } from '@/lib/validate';
 
 /**
- * Converts a Lokkhyo dayOfWeek (0=Sun … 6=Sat, matching JS Date.getDay())
- * to Expo's WEEKLY trigger weekday (1=Sun … 7=Sat).
+ * Lokkhyo day-of-week convention is 0=Saturday … 6=Friday (week starts on
+ * Saturday). This converts a JS Date to that index.
+ */
+export function dateToWeekdayIndex(date: Date): number {
+  return (date.getDay() + 1) % 7;
+}
+
+/**
+ * Converts a Lokkhyo dayOfWeek (0=Sat … 6=Fri) to Expo's WEEKLY trigger
+ * weekday (1=Sun … 7=Sat).
  */
 export function toExpoWeekday(dayOfWeek: number): number {
   if (!Number.isInteger(dayOfWeek) || dayOfWeek < 0 || dayOfWeek > 6) {
     throw new Error(`Invalid Lokkhyo dayOfWeek: ${dayOfWeek}`);
   }
-  return dayOfWeek + 1;
+  return dayOfWeek === 0 ? 7 : dayOfWeek;
 }
 
 /**
  * Returns the Lokkhyo day-of-week index for today (device-local).
  */
 export function getTodayOfWeek(): number {
-  return new Date().getDay();
+  return dateToWeekdayIndex(new Date());
 }
 
 /**

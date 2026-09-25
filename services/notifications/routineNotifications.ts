@@ -11,7 +11,7 @@ import {
 } from '@/services/notifications/notificationsCore';
 import { listRoutine } from '@/services/Routines';
 import { getProfile } from '@/services/Profile';
-import { buildDailyRoutineNotificationContent, groupRoutineByDay, toExpoWeekday } from '@/lib/routine';
+import { buildDailyRoutineNotificationContent, getTodayOfWeek, groupRoutineByDay, toExpoWeekday } from '@/lib/routine';
 import { getNotificationPreferences } from '@/lib/notificationPreferences';
 import type { RoutineSlot } from '@/lib/types';
 
@@ -54,7 +54,7 @@ async function scheduleNotifications(
     const now = new Date();
     const nextFire = new Date(now);
     nextFire.setHours(hour, minute, 0, 0);
-    const daysAhead = (dayOfWeek - now.getDay() + 7) % 7;
+    const daysAhead = (dayOfWeek - getTodayOfWeek() + 7) % 7;
     nextFire.setDate(now.getDate() + daysAhead);
     if (nextFire <= now) nextFire.setDate(nextFire.getDate() + 7);
 

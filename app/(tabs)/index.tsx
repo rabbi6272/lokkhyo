@@ -15,6 +15,7 @@ import { SvgIcon } from '@/components/ui/SvgIcon';
 import { Colors } from '@/constants/theme';
 import { useAllCoursesAttendance } from '@/hooks/useAllCoursesAttendance';
 import { DAY_NAMES } from '@/lib/constants';
+import { getTodayOfWeek } from '@/lib/routine';
 import { parseTime } from '@/lib/validate';
 import { useAuth } from '@/providers/auth-provider';
 import { listAssessments } from '@/services/Assessments';
@@ -122,7 +123,7 @@ export default function HomeScreen() {
 function findNextClass(slots: ReturnType<typeof useRoutines>['slots']) {
   if (slots.length === 0) return null;
   const now = new Date();
-  const today = now.getDay();
+  const today = getTodayOfWeek();
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
   for (let offset = 0; offset < 7; offset++) {

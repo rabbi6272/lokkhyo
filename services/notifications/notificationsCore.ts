@@ -72,12 +72,13 @@ export async function ensureNotificationChannels(): Promise<void> {
 
 /**
  * Requests notification permissions.
- * Only prompts when status is undetermined/NOT_DETERMINED.
+ * Prompts unless already granted, or unless the OS forbids re-asking
+ * (permanently denied, or iOS denied).
  * Returns true if notifications are allowed.
  */
 export async function requestNotificationPermissions(): Promise<boolean> {
   try {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    const { status: existingStatus, canAskAgain } = await Notifications.getPermissionsAsync();
 
     if (existingStatus === 'granted') return true;
 
@@ -85,6 +86,11 @@ export async function requestNotificationPermissions(): Promise<boolean> {
       const iosStatus = (existingStatus as unknown as string);
       if (iosStatus === 'provisional') return true;
     }
+
+    // Android 13+/targetSdk >= 33 reports 'denied' for the default-deny,
+    // pre-prompt state too. Only bail when the OS forbids re-asking, or on
+    // iOS (which never re-prompts after a denial).
+    if (existingStatus === 'denied' && (Platform.OS === 'ios' || canAskAgain === false)) return false;
 
     const { status } = await Notifications.requestPermissionsAsync();
     return status === 'granted';

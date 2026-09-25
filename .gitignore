@@ -64,7 +64,9 @@ android/local.properties
 android/app/*.jks
 android/app/*.keystore
 
+# Lock files
 yarn.lock
+package-lock.json
 
 android/
 ios/

@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: 'InterSemiBold',
-    fontSize: 16,
+    fontSize: 14,
   },
   primaryLabel: {
     color: '#fff',

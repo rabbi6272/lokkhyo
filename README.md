@@ -141,7 +141,7 @@ users/{uid}                          ← profile document
   │           type (ct|quiz|assignment|lab), name, marksObtained,
   │           maxMarks, weight (%), date (YYYY-MM-DD), createdAt
   ├─ routineSlots/{slotId}
-  │     courseId, courseLabel, dayOfWeek (0=Sun…6=Sat),
+  │     courseId, courseLabel, dayOfWeek (0=Sat…6=Fri, week starts Saturday),
   │     startTime, endTime (HH:MM 24h), room, createdAt
   └─ targets/{targetId}
         type (gpa|cgpa|attendance|custom), title, targetValue,

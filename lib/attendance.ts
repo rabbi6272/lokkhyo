@@ -1,5 +1,6 @@
 import type { AcademicTarget, AttendanceRecord, AttendanceStatus, RoutineSlot } from '@/lib/types';
 import { parseTime } from '@/lib/validate';
+import { dateToWeekdayIndex } from '@/lib/routine';
 
 export interface AttendanceOccurrence {
   date: string;
@@ -50,7 +51,7 @@ export function addDays(dateStr: string, days: number): string {
 
 function dateToDayOfWeek(dateStr: string): number {
   const [y, m, d] = dateStr.split('-').map(Number);
-  return new Date(y, m - 1, d).getDay();
+  return dateToWeekdayIndex(new Date(y, m - 1, d));
 }
 
 /**
@@ -118,7 +119,7 @@ export function mergeSessionsWithRecords(
  * leading/trailing blanks before the 1st and after the last day of the month.
  */
 export function buildMonthGrid(year: number, month: number): (string | null)[] {
-  const startDow = new Date(year, month, 1).getDay();
+  const startDow = dateToWeekdayIndex(new Date(year, month, 1));
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const cells: (string | null)[] = [];
 

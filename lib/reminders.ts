@@ -1,5 +1,6 @@
 import type { AssessmentType } from '@/lib/types';
-import { DAY_NAMES, DAY_SHORT_NAMES, MONTH_NAMES } from '@/lib/constants';
+import { DAY_SHORT_NAMES, MONTH_NAMES } from '@/lib/constants';
+import { dateToWeekdayIndex } from '@/lib/routine';
 
 export interface AssessmentReminder {
   assessmentId: string;
@@ -115,7 +116,7 @@ export function formatDateLabel(dateStr: string): string {
   const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
   if (Number.isNaN(d.getTime())) return dateStr;
 
-  return `${DAY_SHORT_NAMES[d.getDay()]}, ${MONTH_NAMES[d.getMonth()]} ${d.getDate()}`;
+  return `${DAY_SHORT_NAMES[dateToWeekdayIndex(d)]}, ${MONTH_NAMES[d.getMonth()]} ${d.getDate()}`;
 }
 
 /**

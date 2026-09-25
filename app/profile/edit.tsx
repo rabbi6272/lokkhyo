@@ -13,7 +13,7 @@ import { SvgIcon } from '@/components/ui/SvgIcon';
 import { Colors } from '@/constants/theme';
 import { useSemesters } from '@/hooks/useSemesters';
 import { useProfile } from '@/hooks/useUserProfile';
-import { gpaRange, required } from '@/lib/validate';
+import { gpaRange, isNumeric, required } from '@/lib/validate';
 
 
 export default function ProfileInfoCard() {
@@ -74,7 +74,7 @@ export default function ProfileInfoCard() {
     const totalWeeks = Number(newSemTotalWeeks);
     const nextErrors: Record<string, string | null> = {
       name: required(newSemName, 'Semester name'),
-      startDate: required(newSemStartDate, 'Start date') || isDate(newSemStartDate),
+      startDate: required(newSemStartDate, 'Start date'),
       totalWeeks: isNumeric(newSemTotalWeeks, 'Total weeks') || (totalWeeks <= 0 ? 'Total weeks must be positive.' : null),
     };
     const gpa = Number(newSemGpa);

@@ -8,6 +8,7 @@ import { useRoutines } from '@/hooks/useRoutines';
 import {
   NOTIFICATION_TYPE_ASSESSMENT_REMINDER,
   NOTIFICATION_TYPE_DAILY_ROUTINE,
+  requestNotificationPermissions,
 } from '@/services/notifications/notificationsCore';
 import { syncRoutineNotifications, cancelRoutineNotifications } from '@/services/notifications/routineNotifications';
 import { syncAssessmentReminders, cancelAssessmentReminders } from '@/services/notifications/assessmentReminders';
@@ -48,12 +49,37 @@ export function useScheduledNotifications() {
     ]);
   }, []);
 
+  const didRequestPermissionRef = useRef(false);
+
+  useEffect(() => {
+    const requestOnce = () => {
+      if (didRequestPermissionRef.current) return;
+      didRequestPermissionRef.current = true;
+      void requestNotificationPermissions();
+    };
+
+    if (AppState.currentState === 'active') {
+      const t = setTimeout(() => {
+        if (AppState.currentState === 'active') requestOnce();
+      }, 1000);
+      return () => clearTimeout(t);
+    }
+
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s === 'active') requestOnce();
+    });
+    return () => sub.remove();
+  }, []);
+
   useEffect(() => {
     if (!user) {
       void cancelAll();
       return;
     }
-    void syncAll(user.uid);
+    void Promise.allSettled([
+      requestNotificationPermissions(),
+      syncAll(user.uid),
+    ]);
   }, [user?.uid, syncAll, cancelAll]);
 
   useEffect(() => {

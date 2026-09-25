@@ -7,6 +7,7 @@ import { Chip } from '@/components/ui/Chip';
 import { Colors } from '@/constants/theme';
 import { useRoutines } from '@/hooks/useRoutines';
 import { DAY_NAMES, DAY_SHORT_NAMES } from '@/lib/constants';
+import { getTodayOfWeek } from '@/lib/routine';
 import { parseTime } from '@/lib/validate';
 import { Wrapper } from '@/components/ui/Wrapper';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -15,7 +16,7 @@ import { SvgIcon } from '@/components/ui/SvgIcon';
 export default function RoutineScreen() {
   const { slots, isLoading, deleteRoutineSlot } = useRoutines();
 
-  const [selectedDay, setSelectedDay] = useState<number>(new Date().getDay());
+  const [selectedDay, setSelectedDay] = useState<number>(getTodayOfWeek());
 
   const daySlots = slots
     .filter((s) => s.dayOfWeek === selectedDay)
