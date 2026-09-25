@@ -68,4 +68,5 @@ yarn.lock
 
 android/
 ios/
-
+/android/
+/ios/
