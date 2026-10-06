@@ -48,6 +48,14 @@ export interface Assessment {
   createdAt: Timestamp | null;
 }
 
+export interface UpcomingReminder {
+  id: string;
+  type: AssessmentType;
+  name: string;
+  date: string;
+  createdAt: Timestamp | null;
+}
+
 export type AttendanceStatus = 'present' | 'absent' | 'cancelled';
 
 export interface AttendanceRecord {

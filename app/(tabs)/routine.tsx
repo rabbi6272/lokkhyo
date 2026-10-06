@@ -1,20 +1,29 @@
-import { ExternalPathString } from 'expo-router';
+import { ExternalPathString, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { Chip } from '@/components/ui/Chip';
 import { Colors } from '@/constants/theme';
+import { useAllUpcomingReminders } from '@/hooks/useAllUpcomingReminders';
+import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
 import { useRoutines } from '@/hooks/useRoutines';
+import { useDeleteUpcomingReminder } from '@/hooks/useUpcomingReminders';
 import { DAY_NAMES, DAY_SHORT_NAMES } from '@/lib/constants';
+import { buildReminderLine, formatDateLabel } from '@/lib/reminders';
 import { getTodayOfWeek } from '@/lib/routine';
 import { parseTime } from '@/lib/validate';
 import { Wrapper } from '@/components/ui/Wrapper';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SvgIcon } from '@/components/ui/SvgIcon';
+import { ThemeContext } from '@react-navigation/native';
 
 export default function RoutineScreen() {
   const { slots, isLoading, deleteRoutineSlot } = useRoutines();
+  const router = useRouter();
+  const { reminders: upcoming, isLoading: isUpcomingLoading } = useAllUpcomingReminders();
+  const deleteUpcoming = useDeleteUpcomingReminder();
+  const prefs = useNotificationPreferences();
 
   const [selectedDay, setSelectedDay] = useState<number>(getTodayOfWeek());
 
@@ -26,6 +35,17 @@ export default function RoutineScreen() {
     Alert.alert('Delete slot', 'Remove this class from your routine?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: () => deleteRoutineSlot.mutate(slotId) },
+    ]);
+  };
+
+  const handleDeleteUpcoming = (reminderId: string, name: string, courseId: string) => {
+    Alert.alert('Delete reminder', `Remove the reminder for "${name}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => deleteUpcoming.mutate({ courseId, reminderId }),
+      },
     ]);
   };
 
@@ -47,6 +67,48 @@ export default function RoutineScreen() {
       </ScrollView>
 
       <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.upcomingHeader}>
+          <ThemedText type="subtitle">Upcoming</ThemedText>
+          <Pressable onPress={() => router.push('/reminder/new' as ExternalPathString)} hitSlop={8}>
+            <ThemedText type='defaultSemiBold' style={{ fontSize: 13 }}>+Add</ThemedText>
+          </Pressable>
+        </View>
+
+        {isUpcomingLoading ? (
+          <ThemedText style={styles.upcomingEmpty}>Loading…</ThemedText>
+        ) : upcoming.length === 0 ? (
+          <ThemedText style={styles.upcomingEmpty}>
+            No upcoming tests or assignments. Tap + to set a reminder.
+          </ThemedText>
+        ) : (
+          upcoming.map((r) => {
+            const reminderLine = buildReminderLine(r, prefs);
+            return (
+              <View key={r.id} style={[styles.slot, { borderColor: Colors.icon }]}>
+                <Pressable
+                  style={styles.slotRow}
+                  onPress={() =>
+                    router.push(`/reminder/new?courseId=${r.courseId}&reminderId=${r.id}` as ExternalPathString)
+                  }
+                >
+                  <View style={styles.slotInfo}>
+                    <ThemedText type="defaultSemiBold">
+                      {r.name} <ThemedText style={styles.meta}>· {r.courseCode}</ThemedText>
+                    </ThemedText>
+                    <ThemedText style={styles.meta}>
+                      {formatDateLabel(r.date)}
+                    </ThemedText>
+                    {reminderLine && <ThemedText style={styles.reminder}>⏰ {reminderLine}</ThemedText>}
+                  </View>
+                  <Pressable onPress={() => handleDeleteUpcoming(r.id, r.name, r.courseId)} hitSlop={8}>
+                    <SvgIcon size={20} name="trash" color="#e5484d" />
+                  </Pressable>
+                </Pressable>
+              </View>
+            );
+          })
+        )}
+
         <ThemedText type="subtitle" style={styles.dayTitle}>
           {DAY_NAMES[selectedDay]}
         </ThemedText>
@@ -102,6 +164,23 @@ const styles = StyleSheet.create({
   },
   dayTitle: {
     marginBottom: 12,
+    marginTop: 20,
+  },
+  upcomingHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  upcomingEmpty: {
+    opacity: 0.6,
+    fontSize: 13,
+    marginBottom: 4,
+  },
+  reminder: {
+    opacity: 0.75,
+    fontSize: 13,
+    color: Colors.tint,
   },
   empty: {
     opacity: 0.7,

@@ -120,7 +120,17 @@ export function useScheduledNotifications() {
       if (data?.type === NOTIFICATION_TYPE_DAILY_ROUTINE) {
         router.push('/routine');
       } else if (data?.type === NOTIFICATION_TYPE_ASSESSMENT_REMINDER && typeof data.courseId === 'string') {
-        router.push({ pathname: '/course/[id]', params: { id: data.courseId } });
+        router.push({
+          pathname: '/course/[id]',
+          params: {
+            id: data.courseId,
+            ...(typeof data.reminderId === 'string'
+              ? { reminderId: data.reminderId }
+              : typeof data.assessmentId === 'string'
+                ? { assessmentId: data.assessmentId }
+                : {}),
+          },
+        });
       }
     }
   }, [lastNotificationResponse, router]);
@@ -132,7 +142,17 @@ export function useScheduledNotifications() {
         if (data?.type === NOTIFICATION_TYPE_DAILY_ROUTINE) {
           router.push('/routine');
         } else if (data?.type === NOTIFICATION_TYPE_ASSESSMENT_REMINDER && typeof data.courseId === 'string') {
-          router.push({ pathname: '/course/[id]', params: { id: data.courseId } });
+          router.push({
+            pathname: '/course/[id]',
+            params: {
+              id: data.courseId,
+              ...(typeof data.reminderId === 'string'
+                ? { reminderId: data.reminderId }
+                : typeof data.assessmentId === 'string'
+                  ? { assessmentId: data.assessmentId }
+                  : {}),
+            },
+          });
         }
       }
     });

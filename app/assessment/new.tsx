@@ -8,19 +8,38 @@ import { Chip } from '@/components/ui/Chip';
 import { Field } from '@/components/ui/InputField';
 import { useAssessments } from '@/hooks/useAssessments';
 import { useCourses } from '@/hooks/useCourses';
+import { useUpcomingReminders } from '@/hooks/useUpcomingReminders';
 import { ASSESSMENT_TYPES, ASSESSMENT_TYPE_LABELS } from '@/lib/constants';
+import { formatDateLabel, getAssessmentReminderTrigger, getReminderLeadDays, toDateKey } from '@/lib/reminders';
+import { formatTime12h } from '@/lib/routine';
 import type { AssessmentType } from '@/lib/types';
 import { clampMarks, isNumeric, required } from '@/lib/validate';
 import { Wrapper } from '@/components/ui/Wrapper';
 import { BackStep } from '@/components/ui/BackStep';
+import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
 export default function AssessmentFormScreen() {
-  const { courseId, assessmentId } = useLocalSearchParams<{ courseId: string; assessmentId?: string }>();
+  const {
+    courseId,
+    assessmentId,
+    presetType,
+    presetName,
+    presetDate,
+    fromReminderId,
+  } = useLocalSearchParams<{
+    courseId: string;
+    assessmentId?: string;
+    presetType?: string;
+    presetName?: string;
+    presetDate?: string;
+    fromReminderId?: string;
+  }>();
   const router = useRouter();
   const { courses } = useCourses();
   const { assessments, createAssessment, updateAssessment } = useAssessments(courseId ?? '');
+  const { deleteReminder } = useUpcomingReminders(courseId ?? '');
 
   const course = courses.find((c) => c.id === courseId);
   const editingAssessment = assessmentId ? assessments.find((a) => a.id === assessmentId) : undefined;
@@ -30,14 +49,39 @@ export default function AssessmentFormScreen() {
     ? ASSESSMENT_TYPES
     : ASSESSMENT_TYPES.filter((t) => t !== 'labFinal');
 
-  const [type, setType] = useState<AssessmentType>('ct');
-  const [name, setName] = useState('');
+  const [type, setType] = useState<AssessmentType>(
+    presetType && (ASSESSMENT_TYPES as readonly string[]).includes(presetType)
+      ? (presetType as AssessmentType)
+      : 'ct',
+  );
+  const [name, setName] = useState(presetName ?? '');
   const [marksObtained, setMarksObtained] = useState('');
   const [maxMarks, setMaxMarks] = useState('');
   const [weight, setWeight] = useState('');
-  const [date, setDate] = useState(today());
+  const [date, setDate] = useState(presetDate ?? today());
   const [teacherName, setTeacherName] = useState('');
   const [errors, setErrors] = useState<Record<string, string | null>>({});
+
+  const prefs = useNotificationPreferences();
+  const trimmedDate = date.trim();
+  const reminderHint = !trimmedDate
+    ? null
+    : !prefs.assessmentRemindersEnabled
+      ? 'Assessment reminders are off — enable them in Settings.'
+      : (() => {
+          const trigger = getAssessmentReminderTrigger(
+            trimmedDate,
+            type,
+            new Date(),
+            prefs.reminderHour,
+            prefs.reminderMinute,
+          );
+          if (!trigger) return 'No reminder — this date is too close or already past.';
+          const hhmm = `${String(prefs.reminderHour).padStart(2, '0')}:${String(prefs.reminderMinute).padStart(2, '0')}`;
+          const lead = getReminderLeadDays(type);
+          const leadLabel = lead ? ` · ${lead} day${lead > 1 ? 's' : ''} before` : '';
+          return `Reminder ${formatDateLabel(toDateKey(trigger))} at ${formatTime12h(hhmm)}${leadLabel}`;
+        })();
 
   useEffect(() => {
     if (editingAssessment) {
@@ -82,11 +126,15 @@ export default function AssessmentFormScreen() {
       await updateAssessment.mutateAsync({ id: assessmentId, data });
     } else {
       await createAssessment.mutateAsync(data);
+      if (fromReminderId && courseId) {
+        await deleteReminder.mutateAsync(fromReminderId);
+      }
     }
     router.back();
   };
 
-  const isSaving = createAssessment.isPending || updateAssessment.isPending;
+  const isSaving =
+    createAssessment.isPending || updateAssessment.isPending || deleteReminder.isPending;
 
   return (
     <>
@@ -161,6 +209,7 @@ export default function AssessmentFormScreen() {
             }}
             error={errors.date}
           />
+          {reminderHint && <ThemedText style={styles.reminderHint}>⏰ {reminderHint}</ThemedText>}
           <Field
             label="Teacher (optional)"
             placeholder="e.g. Dr. John Doe"
@@ -206,6 +255,13 @@ const styles = StyleSheet.create({
   },
   teacherChips: {
     marginTop: -8,
+    marginBottom: 14,
+  },
+  reminderHint: {
+    opacity: 0.65,
+    fontSize: 12,
+    paddingLeft: 8,
+    marginTop: -10,
     marginBottom: 14,
   },
 });

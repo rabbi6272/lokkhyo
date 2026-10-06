@@ -42,9 +42,8 @@ function RootNavigator() {
         <Stack.Screen name="course/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="course/new" options={{ headerShown: false }} />
         <Stack.Screen name="assessment/new" options={{ headerShown: false }} />
+        <Stack.Screen name="reminder/new" options={{ headerShown: false }} />
         <Stack.Screen name="routine/new" options={{ headerShown: false }} />
-        <Stack.Screen name="target/new" options={{ headerShown: false }} />
-        <Stack.Screen name="targets" options={{ headerShown: false }} />
         <Stack.Screen name="profile/edit" options={{ headerShown: false }} />
         <Stack.Screen name="settings/settings" options={{ headerShown: false }} />
       </Stack.Protected>

@@ -72,6 +72,12 @@ export async function syncRoutineNotifications(userId: string): Promise<void> {
     setGlobalNotificationHandler();
     await ensureNotificationChannels();
 
+    const prefs = await getNotificationPreferences();
+    if (!prefs.dailyRoutineEnabled) {
+      await cancelNotificationsByPrefix(ROUTINE_NOTIFICATION_PREFIX);
+      return;
+    }
+
     let slots: RoutineSlot[] = [];
     try {
       slots = await listRoutine(userId);

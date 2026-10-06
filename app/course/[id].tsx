@@ -1,5 +1,6 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ExternalPathString, useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, findNodeHandle, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { Button } from '@/components/ui/Button';
@@ -10,18 +11,59 @@ import { Colors } from '@/constants/theme';
 import { useAllCoursesAttendance } from '@/hooks/useAllCoursesAttendance';
 import { useAssessments } from '@/hooks/useAssessments';
 import { useCourses } from '@/hooks/useCourses';
+import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
+import { useUpcomingReminders } from '@/hooks/useUpcomingReminders';
 import { ASSESSMENT_TYPE_LABELS } from '@/lib/constants';
 import { courseProgress } from '@/lib/gpa';
-
+import { buildReminderLine, formatDateLabel } from '@/lib/reminders';
 
 export default function CourseDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, assessmentId: highlightAssessmentId, reminderId: highlightReminderId } = useLocalSearchParams<{
+    id: string;
+    assessmentId?: string;
+    reminderId?: string;
+  }>();
   const router = useRouter();
 
   const { courses, isLoading: isCoursesLoading } = useCourses();
   const course = courses.find((c) => c.id === id);
   const { assessments, isLoading: isAssessmentsLoading, deleteAssessment } = useAssessments(id ?? '');
+  const { reminders, isLoading: isRemindersLoading, deleteReminder } = useUpcomingReminders(id ?? '');
   const { courseAttendance } = useAllCoursesAttendance();
+  const prefs = useNotificationPreferences();
+
+  const sortedReminders = [...reminders].sort((a, b) => a.date.localeCompare(b.date));
+
+  const scrollRef = useRef<ScrollView>(null);
+  const rowRefs = useRef<Record<string, View | null>>({});
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+
+  const highlightKey = highlightReminderId
+    ? `rm:${highlightReminderId}`
+    : highlightAssessmentId
+      ? `as:${highlightAssessmentId}`
+      : null;
+
+  useEffect(() => {
+    if (!highlightKey || isAssessmentsLoading || isRemindersLoading) return;
+    setHighlightId(highlightKey);
+    const t = setTimeout(() => {
+      const row = rowRefs.current[highlightKey];
+      const scroll = scrollRef.current;
+      if (row && scroll) {
+        const relative = findNodeHandle(scroll);
+        if (relative === null) return;
+        row.measureLayout(relative, (_x, y) => {
+          scroll.scrollTo({ y: Math.max(y - 80, 0), animated: true });
+        }, () => {});
+      }
+    }, 350);
+    const clear = setTimeout(() => setHighlightId(null), 3000);
+    return () => {
+      clearTimeout(t);
+      clearTimeout(clear);
+    };
+  }, [highlightKey, isAssessmentsLoading, isRemindersLoading, assessments, reminders]);
 
   const attendanceStats = courseAttendance.find((c) => c.course.id === id)?.stats;
 
@@ -34,6 +76,17 @@ export default function CourseDetailScreen() {
         text: 'Delete',
         style: 'destructive',
         onPress: () => deleteAssessment.mutate(assessmentId),
+      },
+    ]);
+  };
+
+  const handleDeleteReminder = (reminderId: string, name: string) => {
+    Alert.alert('Delete reminder', `Remove the reminder for "${name}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => deleteReminder.mutate(reminderId),
       },
     ]);
   };
@@ -57,7 +110,7 @@ export default function CourseDetailScreen() {
 
   return (
     <Wrapper style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <ThemedText type="title">{course?.code}</ThemedText>
           <ThemedText style={styles.title}>{course?.title}</ThemedText>
@@ -76,6 +129,60 @@ export default function CourseDetailScreen() {
         </View>
 
         <View style={styles.row}>
+          <ThemedText type="subtitle">Upcoming</ThemedText>
+          <Button
+            title="+Add"
+            variant="ghost"
+            onPress={() => router.push(`/reminder/new?courseId=${course?.id}` as ExternalPathString)}
+          />
+        </View>
+
+        {isRemindersLoading ? (
+          <ThemedText style={styles.meta}>Loading…</ThemedText>
+        ) : sortedReminders.length === 0 ? (
+          <ThemedText style={styles.upcomingEmpty}>
+            Nothing scheduled. Add an upcoming CT, quiz or assignment to get a reminder.
+          </ThemedText>
+        ) : (
+          sortedReminders.map((r) => {
+            const reminderLine = buildReminderLine(r, prefs);
+            const isHighlighted = highlightId === `rm:${r.id}`;
+            return (
+              <View
+                key={r.id}
+                ref={(el) => {
+                  rowRefs.current[`rm:${r.id}`] = el;
+                }}
+                style={[
+                  styles.assessment,
+                  { borderColor: isHighlighted ? Colors.tint : Colors.icon },
+                  isHighlighted && styles.assessmentHighlighted,
+                ]}
+              >
+                <Pressable
+                  style={styles.assessmentRow}
+                  onPress={() =>
+                    router.push(`/reminder/new?courseId=${course?.id}&reminderId=${r.id}` as ExternalPathString)
+                  }
+                >
+                  <View style={styles.assessmentInfo}>
+                    <ThemedText type="defaultSemiBold">
+                      {r.name}{' '}
+                      <ThemedText style={styles.meta}>· {ASSESSMENT_TYPE_LABELS[r.type]}</ThemedText>
+                    </ThemedText>
+                    <ThemedText style={styles.meta}>{formatDateLabel(r.date)}</ThemedText>
+                    {reminderLine && <ThemedText style={styles.reminder}>⏰ {reminderLine}</ThemedText>}
+                  </View>
+                  <Pressable onPress={() => handleDeleteReminder(r.id, r.name)} hitSlop={8}>
+                    <SvgIcon size={20} name="trash" color="#e5484d" />
+                  </Pressable>
+                </Pressable>
+              </View>
+            );
+          })
+        )}
+
+        <View style={[styles.row, styles.assessmentsHeader]}>
           <ThemedText type="subtitle">Assessments</ThemedText>
           <Button
             title="+Add"
@@ -98,27 +205,42 @@ export default function CourseDetailScreen() {
             />
           </View>
         ) : (
-          assessments.map((a) => (
-            <Pressable
-              key={a.id}
-              style={[styles.assessment, { borderColor: Colors.icon }]}
-              onPress={() => router.push(`/assessment/new?courseId=${course?.id}&assessmentId=${a.id}`)}>
-              <View style={styles.assessmentRow}>
-                <View style={styles.assessmentInfo}>
-                  <ThemedText type="defaultSemiBold">
-                    {a.name} <ThemedText style={styles.meta}>· {ASSESSMENT_TYPE_LABELS[a.type]}</ThemedText>
-                  </ThemedText>
-                  <ThemedText style={styles.meta}>
-                    {a.marksObtained} / {a.maxMarks} · weight {a.weight}% · {a.date}
-                    {a.teacherName ? ` · ${a.teacherName}` : ''}
-                  </ThemedText>
-                </View>
-                <Pressable onPress={() => handleDelete(a.id, a.name)} hitSlop={8}>
-                  <SvgIcon size={20} name="trash" color="#e5484d" />
+          assessments.map((a) => {
+            const reminderLine = buildReminderLine(a, prefs);
+            const isHighlighted = highlightId === `as:${a.id}`;
+            return (
+              <View
+                key={a.id}
+                ref={(el) => {
+                  rowRefs.current[`as:${a.id}`] = el;
+                }}
+                style={[
+                  styles.assessment,
+                  { borderColor: isHighlighted ? Colors.tint : Colors.icon },
+                  isHighlighted && styles.assessmentHighlighted,
+                ]}
+              >
+                <Pressable
+                  style={styles.assessmentRow}
+                  onPress={() => router.push(`/assessment/new?courseId=${course?.id}&assessmentId=${a.id}`)}
+                >
+                  <View style={styles.assessmentInfo}>
+                    <ThemedText type="defaultSemiBold">
+                      {a.name} <ThemedText style={styles.meta}>· {ASSESSMENT_TYPE_LABELS[a.type]}</ThemedText>
+                    </ThemedText>
+                    <ThemedText style={styles.meta}>
+                      {a.marksObtained} / {a.maxMarks} · weight {a.weight}% · {a.date}
+                      {a.teacherName ? ` · ${a.teacherName}` : ''}
+                    </ThemedText>
+                    {reminderLine && <ThemedText style={styles.reminder}>⏰ {reminderLine}</ThemedText>}
+                  </View>
+                  <Pressable onPress={() => handleDelete(a.id, a.name)} hitSlop={8}>
+                    <SvgIcon size={20} name="trash" color="#e5484d" />
+                  </Pressable>
                 </Pressable>
               </View>
-            </Pressable>
-          ))
+            );
+          })
         )}
 
         <Pressable
@@ -183,12 +305,28 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 8,
   },
+  upcomingEmpty: {
+    opacity: 0.6,
+    fontSize: 13,
+    marginBottom: 8,
+  },
+  assessmentsHeader: {
+    marginTop: 20,
+  },
   assessment: {
     borderWidth: 1,
     borderLeftWidth: 5,
     borderRadius: 16,
     padding: 14,
     marginBottom: 8,
+  },
+  assessmentHighlighted: {
+    backgroundColor: 'rgba(104, 112, 118, 0.12)',
+  },
+  reminder: {
+    opacity: 0.75,
+    fontSize: 13,
+    color: Colors.tint,
   },
   assessmentRow: {
     flexDirection: 'row',

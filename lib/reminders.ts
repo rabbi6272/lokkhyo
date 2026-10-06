@@ -1,6 +1,6 @@
 import type { AssessmentType } from '@/lib/types';
 import { DAY_SHORT_NAMES, MONTH_NAMES } from '@/lib/constants';
-import { dateToWeekdayIndex } from '@/lib/routine';
+import { dateToWeekdayIndex, formatTime12h } from '@/lib/routine';
 
 export interface AssessmentReminder {
   assessmentId: string;
@@ -104,6 +104,40 @@ export function getUpcomingAssessmentReminders(
   }
 
   return upcoming;
+}
+
+/**
+ * Converts a Date to a local "YYYY-MM-DD" key (same format as Assessment.date).
+ */
+export function toDateKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+type ReminderPrefs = {
+  assessmentRemindersEnabled: boolean;
+  reminderHour: number;
+  reminderMinute: number;
+};
+
+/**
+ * One-line "⏰ Reminder <fire date> · <time>" label for an assessment or
+ * upcoming reminder. Returns null when reminders are off or no trigger exists.
+ */
+export function buildReminderLine(
+  item: { date: string; type: AssessmentType },
+  prefs: ReminderPrefs,
+): string | null {
+  if (!prefs.assessmentRemindersEnabled) return null;
+  const trigger = getAssessmentReminderTrigger(
+    item.date,
+    item.type,
+    new Date(),
+    prefs.reminderHour,
+    prefs.reminderMinute,
+  );
+  if (!trigger) return null;
+  const hhmm = `${String(prefs.reminderHour).padStart(2, '0')}:${String(prefs.reminderMinute).padStart(2, '0')}`;
+  return `Reminder ${formatDateLabel(toDateKey(trigger))} · ${formatTime12h(hhmm)}`;
 }
 
 /**

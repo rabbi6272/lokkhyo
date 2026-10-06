@@ -12,11 +12,11 @@ Built with **Expo SDK 54** (React Native 0.81, React 19), **TypeScript**, **expo
 | --- | --- |
 | **Home** | Dashboard: greeting, next class from your routine, CT progress summary, target progress |
 | **Courses** | Course cards with live CT progress; tap through to a course detail screen |
-| **Routine** | Weekly class grid (Sun–Sat) with times and rooms; "today" pre-selected |
+| **Routine** | Weekly class grid (Sun–Sat) with times and rooms; "today" pre-selected; **Upcoming** section for CT/quiz/assignment/labFinal reminders |
 | **Targets** | GPA / CGPA / attendance / custom targets with progress bars |
 | **Profile** | Edit your profile (name, university, department, semester, target CGPA), sign out |
 
-Course detail lets you add/delete assessments (CT, quiz, assignment, lab) with marks, weights, and dates, and shows weighted progress toward the course total.
+Course detail lets you add/delete assessments (CT, quiz, assignment, lab) with marks, weights, and dates, and shows weighted progress toward the course total. It also lists **upcoming reminders** — mark-less events (CT, quiz, assignment, labFinal) that schedule a notification a few days before the date — plus a **Record marks** shortcut that converts a reminder into a graded assessment once it has happened.
 
 ---
 
@@ -43,17 +43,17 @@ The app follows a strict **layered** structure. UI screens never talk to Firebas
 │  Screens (app/**)                                          │
 │  expo-router routes, themed components, forms              │
 └──────────────────────────────┬─────────────────────────────┘
-                               │ useQuery / useMutation
+                                 │ useQuery / useMutation
 ┌──────────────────────────────▼─────────────────────────────┐
 │  Hooks (hooks/use-*.ts)                                    │
 │  TanStack Query: queryKey, enabled: !!user, invalidate     │
 └──────────────────────────────┬─────────────────────────────┘
-                               │ typed functions
+                                  │ typed functions
 ┌──────────────────────────────▼─────────────────────────────┐
 │  Services (services/*.ts)                                  │
 │  Firestore CRUD: getDocs / setDoc / addDoc / updateDoc     │
 └──────────────────────────────┬─────────────────────────────┘
-                               │
+                                  │
 ┌──────────────────────────────▼─────────────────────────────┐
 │  Firebase (lib/firebase.ts)                                │
 │  initializeApp + initializeAuth (RN persistence) + Firestore│
@@ -103,7 +103,9 @@ app/
     [id].tsx                 Course detail + assessment list
     new.tsx                  Create course (modal)
   assessment/
-    new.tsx                  Add assessment / CT mark (modal)
+    new.tsx                  Add assessment / CT mark (modal; supports preset + fromReminderId)
+  reminder/
+    new.tsx                  Add/edit upcoming reminder (course chips when opened from Routine)
   routine/
     new.tsx                  Add class slot (modal)
   target/
@@ -115,13 +117,16 @@ components/
     button.tsx chip.tsx field.tsx progress-bar.tsx 
 constants/theme.ts           Light/dark color tokens
 hooks/                       use-auth, use-profile, use-courses, use-assessments,
-                             use-routines, use-targets, use-semesters
-lib/                         firebase init, types, gpa/validate/constants logic
+                             use-routines, use-targets, use-semesters,
+                             use-upcoming-reminders, use-all-upcoming-reminders,
+                             use-notification-preferences, use-scheduled-notifications
+lib/                         firebase init, types, gpa/validate/constants/reminders logic
 providers/
   auth-provider.tsx          AuthContext: user + initializing (onAuthStateChanged)
   query-provider.tsx         QueryClientProvider
 services/                    auth, profile, semesters, courses, assessments,
-                             routines, targets (typed Firestore CRUD)
+                             routines, targets, upcoming-reminders (typed Firestore CRUD),
+                             notifications/ (scheduled-notification sync)
 ```
 
 ---
@@ -137,9 +142,12 @@ users/{uid}                          ← profile document
   │     name, status ("active"|"archived"), targetGpa, createdAt
   ├─ courses/{courseId}
   │     semesterId, code, title, credits, passMarks, ctWeight, createdAt
-  │     └─ assessments/{assessmentId}
-  │           type (ct|quiz|assignment|lab), name, marksObtained,
-  │           maxMarks, weight (%), date (YYYY-MM-DD), createdAt
+  │     ├─ assessments/{assessmentId}
+  │     │     type (ct|quiz|assignment|lab), name, marksObtained,
+  │     │     maxMarks, weight (%), date (YYYY-MM-DD), createdAt
+  │     └─ upcomingReminders/{reminderId}
+  │           type (ct|quiz|assignment|labFinal), name,
+  │           date (YYYY-MM-DD), createdAt          ← no marks; progress untouched
   ├─ routineSlots/{slotId}
   │     courseId, courseLabel, dayOfWeek (0=Sat…6=Fri, week starts Saturday),
   │     startTime, endTime (HH:MM 24h), room, createdAt
@@ -216,6 +224,18 @@ These feed the progress bars on the dashboard, course cards, and course detail. 
 
 ---
 
+## Upcoming reminders & notifications
+
+Reminders are a **separate entity from graded assessments** (`UpcomingReminder` in `lib/types.ts`): they carry only `type`, `name`, and `date` — no marks — so an upcoming test never affects progress. Once the event happens, use **Record marks after it happens** on the reminder form to convert it into a normal assessment (the reminder is deleted).
+
+- **Create** from the **Routine** tab (`+` in the Upcoming section) or a course detail screen; the form is `app/reminder/new.tsx`.
+- **Lead time** (`lib/reminders.ts` → `REMINDER_LEAD_DAYS`): `ct`/`assignment` = 2 days, `quiz` = 3 days, `labFinal` = 5 days. Notifications fire at the reminder time set in **Settings** (default 07:00).
+- **Sync** (`services/notifications/assessmentReminders.ts`) unions graded assessments and upcoming reminders, then cancels/reschedules local notifications — honoring the **Settings toggles** (`assessmentRemindersEnabled`, `dailyRoutineEnabled`).
+- **Tap-through**: notification payload carries `courseId` + `assessmentId`/`reminderId`; tapping opens the course screen and briefly highlights the matching row.
+- Queries/mutations live in `hooks/useUpcomingReminders.ts` (per-course) and `hooks/useAllUpcomingReminders.ts` (cross-course, for the Routine page).
+
+---
+
 ## Getting started
 
 ### 1. Create a Firebase project
@@ -260,6 +280,7 @@ npx expo start        # works in Expo Go on iOS/Android
 | `npm run ios` | Start on iOS simulator |
 | `npm run web` | Start on web |
 | `npm run lint` | Run ESLint (`expo lint`) |
+| `npm run check:errors` | Type-check + lint (used as the pre-commit gate) |
 | `npx tsc --noEmit` | Type-check the project |
 
 ## Notes

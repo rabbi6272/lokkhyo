@@ -11,45 +11,77 @@ import {
 } from '@/services/notifications/notificationsCore';
 import { listCourses } from '@/services/Courses';
 import { listAssessments } from '@/services/Assessments';
+import { listUpcomingReminders } from '@/services/UpcomingReminders';
 import { getUpcomingAssessmentReminders, buildAssessmentReminderContent } from '@/lib/reminders';
 import { getNotificationPreferences } from '@/lib/notificationPreferences';
-import type { Assessment } from '@/lib/types';
+import type { Assessment, UpcomingReminder } from '@/lib/types';
+
+type ReminderSource = 'assessment' | 'upcoming';
+type ScheduledReminder = ReturnType<typeof getUpcomingAssessmentReminders>[number] & {
+  source: ReminderSource;
+};
 
 /**
- * Fetches all courses and their assessments for a user,
- * then computes which ones have upcoming reminders.
+ * Fetches all courses, their graded assessments, and their standalone
+ * upcoming reminders, then computes which ones still have a future trigger.
  */
 export async function getUpcomingAssessmentRemindersForUser(userId: string) {
   const courses = await listCourses(userId);
   const courseMap = new Map(courses.map((c) => [c.id, c.code]));
 
-  const assessmentLists = await Promise.allSettled(
-    courses.map((course) =>
-      listAssessments(userId, course.id).then((assessments) =>
-        assessments.map((a) => ({ ...a, courseId: course.id })),
+  const [assessmentLists, reminderLists] = await Promise.all([
+    Promise.allSettled(
+      courses.map((course) =>
+        listAssessments(userId, course.id).then((assessments) =>
+          assessments.map((a) => ({ ...a, courseId: course.id })),
+        ),
       ),
     ),
-  );
+    Promise.allSettled(
+      courses.map((course) =>
+        listUpcomingReminders(userId, course.id).then((reminders) =>
+          reminders.map((r) => ({ ...r, courseId: course.id })),
+        ),
+      ),
+    ),
+  ]);
 
   const allAssessments = assessmentLists
     .filter((r): r is PromiseFulfilledResult<(Assessment & { courseId: string })[]> => r.status === 'fulfilled')
     .flatMap((r) => r.value);
 
+  const allReminders = reminderLists
+    .filter(
+      (r): r is PromiseFulfilledResult<(UpcomingReminder & { courseId: string })[]> =>
+        r.status === 'fulfilled',
+    )
+    .flatMap((r) => r.value);
+
   const { reminderHour, reminderMinute } = await getNotificationPreferences();
-  const upcoming = getUpcomingAssessmentReminders(allAssessments, new Date(), reminderHour, reminderMinute);
+  const now = new Date();
+  const fromAssessments = getUpcomingAssessmentReminders(allAssessments, now, reminderHour, reminderMinute);
+  const fromReminders = getUpcomingAssessmentReminders(allReminders, now, reminderHour, reminderMinute);
+
+  const upcoming: ScheduledReminder[] = [
+    ...fromAssessments.map((r) => ({ ...r, source: 'assessment' as const })),
+    ...fromReminders.map((r) => ({ ...r, source: 'upcoming' as const })),
+  ];
 
   return { upcoming, courseMap };
 }
 
 /**
- * Schedules one-off DATE notification for each upcoming assessment.
+ * Schedules one-off DATE notification for each upcoming assessment/reminder.
  */
 async function scheduleReminders(
-  upcoming: ReturnType<typeof getUpcomingAssessmentReminders>,
+  upcoming: ScheduledReminder[],
   courseMap: Map<string, string>,
 ): Promise<void> {
   for (const reminder of upcoming) {
-    const identifier = `${ASSESSMENT_NOTIFICATION_PREFIX}${reminder.assessmentId}`;
+    const isUpcoming = reminder.source === 'upcoming';
+    const identifier = isUpcoming
+      ? `${ASSESSMENT_NOTIFICATION_PREFIX}upcoming.${reminder.assessmentId}`
+      : `${ASSESSMENT_NOTIFICATION_PREFIX}${reminder.assessmentId}`;
     const courseCode = courseMap.get(reminder.courseId);
     const content = buildAssessmentReminderContent(
       { type: reminder.type, name: reminder.name, date: reminder.date },
@@ -67,7 +99,13 @@ async function scheduleReminders(
       content: {
         title: content.title,
         body: content.body,
-        data: { type: NOTIFICATION_TYPE_ASSESSMENT_REMINDER, courseId: reminder.courseId },
+        data: {
+          type: NOTIFICATION_TYPE_ASSESSMENT_REMINDER,
+          courseId: reminder.courseId,
+          ...(isUpcoming
+            ? { upcoming: true, reminderId: reminder.assessmentId }
+            : { assessmentId: reminder.assessmentId }),
+        },
       },
       trigger,
     });
@@ -83,7 +121,13 @@ export async function syncAssessmentReminders(userId: string): Promise<void> {
     setGlobalNotificationHandler();
     await ensureNotificationChannels();
 
-    let upcoming: ReturnType<typeof getUpcomingAssessmentReminders>;
+    const prefs = await getNotificationPreferences();
+    if (!prefs.assessmentRemindersEnabled) {
+      await cancelNotificationsByPrefix(ASSESSMENT_NOTIFICATION_PREFIX);
+      return;
+    }
+
+    let upcoming: ScheduledReminder[];
     let courseMap: Map<string, string>;
     try {
       ({ upcoming, courseMap } = await getUpcomingAssessmentRemindersForUser(userId));

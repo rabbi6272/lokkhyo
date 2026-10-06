@@ -1,6 +1,7 @@
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, Modal, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { useQuery } from '@tanstack/react-query';
 
 import { BackStep } from '@/components/ui/BackStep';
 import { Button } from '@/components/ui/Button';
@@ -21,7 +22,11 @@ import {
 } from '@/lib/notificationPreferences';
 import { formatTime12h } from '@/lib/routine';
 import { cancelRoutineNotifications, syncRoutineNotifications } from '@/services/notifications/routineNotifications';
-import { cancelAssessmentReminders, syncAssessmentReminders } from '@/services/notifications/assessmentReminders';
+import {
+  cancelAssessmentReminders,
+  getUpcomingAssessmentRemindersForUser,
+  syncAssessmentReminders,
+} from '@/services/notifications/assessmentReminders';
 
 const REMINDER_TIME_OPTIONS: { hour: number; minute: number }[] = [
   { hour: 6, minute: 0 },
@@ -55,6 +60,20 @@ export default function SettingsScreen() {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [timeModalVisible, setTimeModalVisible] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  const { data: upcomingData, isLoading: isUpcomingLoading } = useQuery({
+    queryKey: ['upcomingAssessmentReminders', user?.uid],
+    queryFn: () => getUpcomingAssessmentRemindersForUser(user!.uid),
+    enabled: !!user && assessmentRemindersEnabled && prefsLoaded,
+  });
+
+  const upcomingCount = upcomingData?.upcoming.length;
+  const assessmentReminderDescription =
+    assessmentRemindersEnabled && !isUpcomingLoading && upcomingCount !== undefined
+      ? upcomingCount > 0
+        ? `Reminds you 2–5 days before · ${upcomingCount} upcoming scheduled`
+        : 'Reminds you 2–5 days before · nothing upcoming'
+      : 'Get notified before CTs, quizzes & assignments';
 
   useEffect(() => {
     getNotificationPreferences().then((prefs) => {
@@ -138,7 +157,7 @@ export default function SettingsScreen() {
             />
             <ToggleRow
               label="Assessment reminders"
-              description="Get notified before CTs, quizzes & assignments"
+              description={assessmentReminderDescription}
               value={assessmentRemindersEnabled}
               onValueChange={handleToggleAssessmentReminders}
               disabled={!prefsLoaded}
