@@ -1,80 +1,62 @@
-import React from 'react';
 import { Tabs } from 'expo-router';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { SvgIcon } from '@/components/ui/SvgIcon';
-import { Colors } from '@/constants/theme';
-import { Text, View } from 'react-native';
+import { FontFamily, Palette } from '@/constants/theme';
+
+const TABS = [
+  { name: 'index', title: 'Home', icon: 'home' },
+  { name: 'courses', title: 'Courses', icon: 'courses' },
+  { name: 'routine', title: 'Routine', icon: 'routine' },
+  { name: 'attendance', title: 'Attendance', icon: 'calender' },
+  { name: 'profile', title: 'Profile', icon: 'user' },
+] as const;
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors.tint,
         headerShown: false,
         animation: 'shift',
-        tabBarStyle: {
-          height: 80,
-          paddingTop: 10,
-        },
-        tabBarLabel(props) {
-          return <Text style={{ fontFamily: props.focused ? 'InterSemiBold' : 'InterMedium', fontSize: 11, color: props.color, paddingTop: 2 }}>{props.children}</Text>;
-        }
+        tabBarActiveTintColor: Palette.teal,
+        tabBarInactiveTintColor: Palette.faint,
+        tabBarStyle: styles.bar,
+        tabBarLabel: ({ focused, color, children }) => (
+          <Text style={[styles.label, { color, fontFamily: focused ? FontFamily.semibold : FontFamily.medium }]}>
+            {children}
+          </Text>
+        ),
       }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={{ flex: 1, paddingHorizontal: 13, backgroundColor: focused ? Colors.card : 'transparent', borderRadius: 30, }}>
-              <SvgIcon name="home" size={28} color={color} />
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="courses"
-        options={{
-          title: 'Courses',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={{ flex: 1, paddingHorizontal: 13, backgroundColor: focused ? Colors.card : 'transparent', borderRadius: 30, }}>
-              <SvgIcon name="courses" size={28} color={color} />
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="routine"
-        options={{
-          title: 'Routine',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={{ flex: 1, paddingHorizontal: 13, backgroundColor: focused ? Colors.card : 'transparent', borderRadius: 30, }}>
-              <SvgIcon name="routine" size={28} color={color} />
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="attendance"
-        options={{
-          title: 'Attendance',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={{ flex: 1, paddingHorizontal: 13, backgroundColor: focused ? Colors.card : 'transparent', borderRadius: 30, }}>
-              <SvgIcon name="calender" size={28} color={color} />
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={{ flex: 1, paddingHorizontal: 13, backgroundColor: focused ? Colors.card : 'transparent', borderRadius: 30, }}>
-              <SvgIcon name="user" size={28} color={color} />
-            </View>
-          ),
-        }}
-      />
+      {TABS.map((tab) => (
+        <Tabs.Screen
+          key={tab.name}
+          name={tab.name}
+          options={{
+            title: tab.title,
+            tabBarIcon: ({ color, focused }) => (
+              <View style={styles.iconWrap}>
+                <View style={[styles.marker, focused && { backgroundColor: Palette.teal }]} />
+                <SvgIcon name={tab.icon} size={24} color={color} />
+              </View>
+            ),
+          }}
+        />
+      ))}
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  bar: {
+    height: 72,
+    paddingTop: 6,
+    backgroundColor: Palette.surface,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Palette.line,
+    elevation: 0,
+  },
+  label: { fontSize: 11, paddingTop: 2 },
+  iconWrap: { alignItems: 'center', gap: 4 },
+  /** A short bar above the active tab's icon — the only active-state decoration. */
+  marker: { width: 18, height: 3, borderRadius: 2, backgroundColor: 'transparent', marginTop: -6 },
+});

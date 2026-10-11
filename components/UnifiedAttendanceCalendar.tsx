@@ -4,7 +4,7 @@ import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { Chip } from '@/components/ui/Chip';
 import { SvgIcon } from '@/components/ui/SvgIcon';
-import { Colors } from '@/constants/theme';
+import { FontFamily, Palette, Radius, Space } from '@/constants/theme';
 import { buildMonthGrid, todayStr, type AttendanceSession } from '@/lib/attendance';
 import { DAY_SHORT_NAMES, MONTH_NAMES } from '@/lib/constants';
 import { formatTime12h } from '@/lib/routine';
@@ -12,11 +12,11 @@ import type { AttendanceStatus } from '@/lib/types';
 import type { DaySession } from '@/hooks/useAllCoursesAttendance';
 
 const STATUS_COLORS: Record<'present' | 'absent' | 'cancelled' | 'needsAction' | 'future', string> = {
-  present: '#16a34a',
-  absent: '#dc2626',
-  cancelled: '#9ca3af',
-  needsAction: '#f59e0b',
-  future: '#d1d5db',
+  present: Palette.good,
+  absent: Palette.risk,
+  cancelled: Palette.faint,
+  needsAction: Palette.warn,
+  future: Palette.line,
 };
 
 const STATUS_OPTIONS: { label: string; value: AttendanceStatus }[] = [
@@ -80,12 +80,12 @@ export function UnifiedAttendanceCalendar({
     <View style={styles.card}>
       <View style={styles.monthHeader}>
         <Pressable onPress={() => canGoPrev && changeMonth(-1)} hitSlop={8} disabled={!canGoPrev}>
-          <SvgIcon name="arrowLeft" size={18} color={canGoPrev ? Colors.text : Colors.icon} />
+          <SvgIcon name="arrowLeft" size={18} color={canGoPrev ? Palette.ink : Palette.line} />
         </Pressable>
         <ThemedText type="defaultSemiBold">{MONTH_NAMES[month - 1]} {year}</ThemedText>
         <Pressable onPress={() => canGoNext && changeMonth(1)} hitSlop={8} disabled={!canGoNext}>
           <View style={{ transform: [{ rotate: '180deg' }] }}>
-            <SvgIcon name="arrowLeft" size={18} color={canGoNext ? Colors.text : Colors.icon} />
+            <SvgIcon name="arrowLeft" size={18} color={canGoNext ? Palette.ink : Palette.line} />
           </View>
         </Pressable>
       </View>
@@ -110,7 +110,7 @@ export function UnifiedAttendanceCalendar({
               style={[styles.cell, isToday && styles.cellToday]}
               disabled={daySessions.length === 0}
               onPress={() => setSelectedDate(date)}>
-              <ThemedText style={styles.cellText}>{dayNum}</ThemedText>
+              <ThemedText style={[styles.cellText, isToday && styles.cellTextToday]}>{dayNum}</ThemedText>
               {status && <View style={[styles.dot, { backgroundColor: STATUS_COLORS[status] }]} />}
             </Pressable>
           );
@@ -128,14 +128,17 @@ export function UnifiedAttendanceCalendar({
         ))}
       </View>
 
-      <Modal visible={!!selectedDate} transparent animationType="fade" onRequestClose={() => setSelectedDate(null)}>
+      <Modal visible={!!selectedDate} transparent animationType="slide" onRequestClose={() => setSelectedDate(null)}>
         <Pressable style={styles.modalOverlay} onPress={() => setSelectedDate(null)}>
           <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
-            <ThemedText type="subtitle" style={styles.modalTitle}>{selectedDate}</ThemedText>
+            <ThemedText type="eyebrow">MARK ATTENDANCE</ThemedText>
+            <ThemedText type="heading" style={styles.modalTitle}>
+              {selectedDate ? formatDateHeading(selectedDate) : ''}
+            </ThemedText>
             {selectedSessions.map((d) => (
               <View key={`${d.courseId}_${d.session.slotId}`} style={styles.sessionRow}>
                 <ThemedText type="defaultSemiBold">{d.courseCode}</ThemedText>
-                <ThemedText style={styles.meta}>
+                <ThemedText type="caption">
                   {formatTime12h(d.session.startTime)} – {formatTime12h(d.session.endTime)}
                 </ThemedText>
                 <View style={styles.chips}>
@@ -157,28 +160,37 @@ export function UnifiedAttendanceCalendar({
   );
 }
 
+/** `2026-10-11` → `Sunday, 11 October`. */
+function formatDateHeading(date: string): string {
+  const [y, m, d] = date.split('-').map(Number);
+  const weekday = new Date(y, m - 1, d).toLocaleDateString('en-GB', { weekday: 'long' });
+  return `${weekday}, ${d} ${MONTH_NAMES[m - 1]}`;
+}
+
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
+    backgroundColor: Palette.surface,
+    borderRadius: Radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Palette.line,
+    padding: Space.lg,
   },
   monthHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: Space.md,
   },
   weekRow: {
     flexDirection: 'row',
-    marginBottom: 4,
+    marginBottom: Space.xs,
   },
   weekLabel: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 12,
-    opacity: 0.5,
+    fontFamily: FontFamily.medium,
+    fontSize: 11,
+    color: Palette.faint,
   },
   grid: {
     flexDirection: 'row',
@@ -189,64 +201,69 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2,
+    gap: 3,
   },
   cellToday: {
-    borderWidth: 1,
-    borderColor: Colors.tint,
-    borderRadius: 8,
+    backgroundColor: Palette.tealSoft,
+    borderRadius: Radius.sm,
   },
   cellText: {
+    fontFamily: FontFamily.medium,
     fontSize: 13,
   },
+  cellTextToday: {
+    fontFamily: FontFamily.semibold,
+    color: Palette.teal,
+  },
   dot: {
-    width: 6,
-    height: 6,
+    width: 5,
+    height: 5,
     borderRadius: 3,
   },
   legend: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
-    marginTop: 12,
+    gap: Space.md,
+    marginTop: Space.md,
+    paddingTop: Space.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Palette.line,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
   },
   legendLabel: {
     fontSize: 11,
-    opacity: 0.6,
-  },
-  meta: {
-    opacity: 0.6,
-    fontSize: 13,
+    color: Palette.muted,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+    backgroundColor: 'rgba(15,30,36,0.45)',
+    justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    padding: 20,
+    backgroundColor: Palette.surface,
+    borderTopLeftRadius: Radius.lg + 4,
+    borderTopRightRadius: Radius.lg + 4,
+    padding: Space.xl,
+    paddingBottom: Space.xxl,
     width: '100%',
-    maxWidth: 400,
-    gap: 12,
+    gap: Space.md,
   },
   modalTitle: {
-    marginBottom: 4,
+    marginBottom: Space.xs,
   },
   sessionRow: {
     gap: 6,
+    paddingTop: Space.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Palette.line,
   },
   chips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: Space.sm,
   },
 });

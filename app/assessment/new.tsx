@@ -138,7 +138,7 @@ export default function AssessmentFormScreen() {
 
   return (
     <>
-      <BackStep title={isEditing ? 'Edit Assessment' : 'New Assessment'} onBack={() => router.back()} />
+      <BackStep title={isEditing ? 'Edit mark' : 'Add mark'} onBack={() => router.back()} />
       <Wrapper noTopMargin style={styles.flex}>
         <ScrollView keyboardShouldPersistTaps="handled">
 
@@ -230,7 +230,7 @@ export default function AssessmentFormScreen() {
           )}
 
           <Button
-            title={isEditing ? 'Save Changes' : 'Save Assessment'}
+            title={isEditing ? 'Save changes' : 'Save mark'}
             onPress={handleSubmit}
             loading={isSaving}
           />

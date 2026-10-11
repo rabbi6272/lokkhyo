@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 
 import { useAuth } from '@/providers/auth-provider';
 import { useRoutines } from '@/hooks/useRoutines';
 import {
+  ensureNotificationChannels,
   NOTIFICATION_TYPE_ASSESSMENT_REMINDER,
   NOTIFICATION_TYPE_DAILY_ROUTINE,
+  NOTIFICATION_TYPE_SERVER_PUSH,
   requestNotificationPermissions,
 } from '@/services/notifications/notificationsCore';
+import { registerThisDevice } from '@/services/devices/devices.services';
 import { syncRoutineNotifications, cancelRoutineNotifications } from '@/services/notifications/routineNotifications';
 import { syncAssessmentReminders, cancelAssessmentReminders } from '@/services/notifications/assessmentReminders';
 
@@ -77,10 +80,32 @@ export function useScheduledNotifications() {
       return;
     }
     void Promise.allSettled([
-      requestNotificationPermissions(),
+      // Register for server push once the user has answered the permission
+      // prompt; the server channel must exist before a push can land in it.
+      requestNotificationPermissions().then(async (granted) => {
+        if (!granted) return;
+        await ensureNotificationChannels();
+        await registerThisDevice();
+      }),
       syncAll(user.uid),
-    ]);
+    ]).then((results) => {
+      if (results[0].status === 'rejected') {
+        console.warn('[notifications] Push registration failed:', results[0].reason);
+      }
+    });
   }, [user?.uid, syncAll, cancelAll]);
+
+  // FCM rotates tokens; re-register so server pushes keep arriving.
+  const signedIn = !!user;
+  useEffect(() => {
+    if (!signedIn) return;
+    const sub = Notifications.addPushTokenListener((token) => {
+      void registerThisDevice(String(token.data)).catch((e: unknown) =>
+        console.warn('[notifications] Push re-registration failed:', e),
+      );
+    });
+    return () => sub.remove();
+  }, [signedIn]);
 
   useEffect(() => {
     if (!user) return;
@@ -109,17 +134,15 @@ export function useScheduledNotifications() {
   }, [user?.uid, syncAll]);
 
   // Handle notification taps
-  const lastNotificationResponse = Notifications.useLastNotificationResponse();
-
-  useEffect(() => {
-    if (
-      lastNotificationResponse?.notification &&
-      lastNotificationResponse.actionIdentifier === Notifications.DEFAULT_ACTION_IDENTIFIER
-    ) {
-      const data = lastNotificationResponse.notification.request.content.data as Record<string, unknown> | undefined;
-      if (data?.type === NOTIFICATION_TYPE_DAILY_ROUTINE) {
+  const openFromNotification = useCallback(
+    (response: Notifications.NotificationResponse) => {
+      if (response.actionIdentifier !== Notifications.DEFAULT_ACTION_IDENTIFIER) return;
+      const data = notificationData(response.notification);
+      if (data.type === NOTIFICATION_TYPE_SERVER_PUSH && typeof data.link === 'string' && data.link) {
+        router.push(data.link as Href);
+      } else if (data.type === NOTIFICATION_TYPE_DAILY_ROUTINE) {
         router.push('/routine');
-      } else if (data?.type === NOTIFICATION_TYPE_ASSESSMENT_REMINDER && typeof data.courseId === 'string') {
+      } else if (data.type === NOTIFICATION_TYPE_ASSESSMENT_REMINDER && typeof data.courseId === 'string') {
         router.push({
           pathname: '/course/[id]',
           params: {
@@ -132,31 +155,29 @@ export function useScheduledNotifications() {
           },
         });
       }
-    }
-  }, [lastNotificationResponse, router]);
+    },
+    [router],
+  );
+
+  const lastNotificationResponse = Notifications.useLastNotificationResponse();
 
   useEffect(() => {
-    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
-      if (response.actionIdentifier === Notifications.DEFAULT_ACTION_IDENTIFIER) {
-        const data = response.notification.request.content.data as Record<string, unknown> | undefined;
-        if (data?.type === NOTIFICATION_TYPE_DAILY_ROUTINE) {
-          router.push('/routine');
-        } else if (data?.type === NOTIFICATION_TYPE_ASSESSMENT_REMINDER && typeof data.courseId === 'string') {
-          router.push({
-            pathname: '/course/[id]',
-            params: {
-              id: data.courseId,
-              ...(typeof data.reminderId === 'string'
-                ? { reminderId: data.reminderId }
-                : typeof data.assessmentId === 'string'
-                  ? { assessmentId: data.assessmentId }
-                  : {}),
-            },
-          });
-        }
-      }
-    });
+    if (lastNotificationResponse?.notification) openFromNotification(lastNotificationResponse);
+  }, [lastNotificationResponse, openFromNotification]);
 
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(openFromNotification);
     return () => subscription.remove();
-  }, [router]);
+  }, [openFromNotification]);
+}
+
+/**
+ * A notification's data payload. Local notifications carry it in
+ * `content.data`; an FCM push tapped from the tray may carry it only on the
+ * trigger's `remoteMessage`, so both are read.
+ */
+function notificationData(notification: Notifications.Notification): Record<string, unknown> {
+  const content = (notification.request.content.data ?? {}) as Record<string, unknown>;
+  const trigger = notification.request.trigger as { remoteMessage?: { data?: Record<string, unknown> } } | null;
+  return { ...(trigger?.remoteMessage?.data ?? {}), ...content };
 }

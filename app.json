@@ -41,7 +41,14 @@
         }
       ],
       "@react-native-firebase/app",
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Lokkhyo to access your photos so you can set a profile picture.",
+          "cameraPermission": "Allow Lokkhyo to use your camera to take a profile picture."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

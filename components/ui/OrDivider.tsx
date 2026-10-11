@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Colors } from '@/constants/theme';
+import { FontFamily, Palette } from '@/constants/theme';
 
 export function OrDivider() {
   return (
@@ -22,12 +22,12 @@ const styles = StyleSheet.create({
   line: {
     flex: 1,
     height: 1,
-    backgroundColor: Colors.icon,
+    backgroundColor: Palette.line,
     opacity: 0.4,
   },
   text: {
     fontSize: 13,
-    color: Colors.icon,
-    fontWeight: '500',
+    color: Palette.faint,
+    fontFamily: FontFamily.medium,
   },
 });

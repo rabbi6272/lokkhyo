@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { Palette } from '@/constants/theme';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -69,7 +70,7 @@ export default function NewCourseScreen() {
 
   return (
     <>
-      <BackStep title="New Course" onBack={() => router.back()} />
+      <BackStep title="New course" onBack={() => router.back()} />
       <Wrapper noTopMargin style={styles.flex}>
         <ScrollView>
           <View style={styles.section}>
@@ -184,7 +185,7 @@ export default function NewCourseScreen() {
             </>
           )}
 
-          <Button title="Create Course" onPress={handleSubmit} loading={createCourse.isPending} />
+          <Button title="Add course" onPress={handleSubmit} loading={createCourse.isPending} />
         </ScrollView>
       </Wrapper>
     </>
@@ -217,7 +218,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   error: {
-    color: '#e5484d',
+    color: Palette.risk,
     fontSize: 13,
   },
 });

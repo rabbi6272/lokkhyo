@@ -1,73 +1,59 @@
-import { Colors } from '@/constants/theme';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+
+import { Palette } from '@/constants/theme';
 
 type ProgressBarProps = {
   percent: number;
   color?: string;
+  /** Where the target line sits, 0–100 — e.g. 60 for the attendance mark. */
+  target?: number;
 };
 
-export function ProgressBar({ percent, color }: ProgressBarProps) {
-  const track = Colors.icon + "50";
-  const tint = color ?? Colors.tint;
+/**
+ * A thin bar that fills to `percent`. With `target`, a small tick marks the
+ * line the student is aiming for, so the bar reads as "how far from the
+ * target", not just "how full".
+ */
+export function ProgressBar({ percent, color = Palette.teal, target }: ProgressBarProps) {
   const clamped = Math.min(100, Math.max(0, percent));
   const progress = useSharedValue(0);
 
-  const fillRef = useRef<React.ElementRef<typeof Animated.View>>(null);
-  const hasEntered = useRef(false);
-  const latestTarget = useRef(clamped);
-  latestTarget.current = clamped;
-
   useEffect(() => {
-    if (typeof IntersectionObserver === 'undefined') {
-      progress.value = withTiming(clamped, { duration: 1000 });
-      hasEntered.current = true;
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (!hasEntered.current && entries.some((e) => e.isIntersecting)) {
-          hasEntered.current = true;
-          progress.value = withTiming(latestTarget.current);
-        }
-      },
-      { threshold: [0] },
-    );
-
-    const node = fillRef.current;
-    if (node) observer.observe(node as unknown as Element);
-
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (hasEntered.current) {
-      progress.value = withTiming(clamped, { duration: 1000 });
-    }
+    progress.value = withTiming(clamped, { duration: 700 });
   }, [clamped, progress]);
 
-  const fillStyle = useAnimatedStyle(() => ({
-    width: `${progress.value}%`,
-  }));
+  const fillStyle = useAnimatedStyle(() => ({ width: `${progress.value}%` }));
 
   return (
-    <View style={[styles.track, { backgroundColor: track }]}>
-      <Animated.View ref={fillRef} style={[styles.fill, fillStyle, { backgroundColor: tint }]} />
+    <View
+      accessibilityRole="progressbar"
+      accessibilityValue={{ min: 0, max: 100, now: Math.round(clamped) }}
+      style={styles.wrap}>
+      <View style={styles.track}>
+        <Animated.View style={[styles.fill, fillStyle, { backgroundColor: color }]} />
+      </View>
+      {target !== undefined && <View style={[styles.tick, { left: `${Math.min(100, Math.max(0, target))}%` }]} />}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrap: { height: 12, justifyContent: 'center' },
   track: {
-    height: 8,
-    borderRadius: 4,
+    height: 6,
+    borderRadius: 3,
     overflow: 'hidden',
-    width: '100%',
+    backgroundColor: Palette.line,
   },
-  fill: {
-    height: '100%',
-    borderRadius: 4,
+  fill: { height: '100%', borderRadius: 3 },
+  tick: {
+    position: 'absolute',
+    width: 2,
+    height: 12,
+    marginLeft: -1,
+    borderRadius: 1,
+    backgroundColor: Palette.ink,
   },
 });

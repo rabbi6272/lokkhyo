@@ -9,8 +9,8 @@ import {
   ROUTINE_NOTIFICATION_PREFIX,
   setGlobalNotificationHandler,
 } from '@/services/notifications/notificationsCore';
-import { listRoutine } from '@/services/Routines';
-import { getProfile } from '@/services/Profile';
+import { fetchWeekRoutine } from '@/services/routine/routine.services';
+import { getMe } from '@/services/profile/profile.api';
 import { buildDailyRoutineNotificationContent, getTodayOfWeek, groupRoutineByDay, toExpoWeekday } from '@/lib/routine';
 import { getNotificationPreferences } from '@/lib/notificationPreferences';
 import type { RoutineSlot } from '@/lib/types';
@@ -63,14 +63,24 @@ async function scheduleNotifications(
 }
 
 /**
- * Fetches the user's routine from Firestore, then cancels and reschedules
- * all daily routine notifications.
- * Idempotent: repeated calls yield exactly 7 notifications.
+ * iOS: fetches the user's routine from the API, then cancels and reschedules
+ * all daily routine notifications. Idempotent: repeated calls yield exactly 7
+ * notifications. Android: the server pushes it, so this only clears local ones.
  */
 export async function syncRoutineNotifications(userId: string): Promise<void> {
   try {
     setGlobalNotificationHandler();
     await ensureNotificationChannels();
+
+    // On Android the server sends the morning routine as a push, built from the
+    // timetable as it stands that morning and controlled by the same settings
+    // (`/me/notification-prefs`). Scheduling it locally too would notify twice,
+    // so any local schedules are cleared — including ones from before this
+    // release. iOS has no server push yet and keeps the local version.
+    if (Platform.OS === 'android') {
+      await cancelNotificationsByPrefix(ROUTINE_NOTIFICATION_PREFIX);
+      return;
+    }
 
     const prefs = await getNotificationPreferences();
     if (!prefs.dailyRoutineEnabled) {
@@ -80,16 +90,18 @@ export async function syncRoutineNotifications(userId: string): Promise<void> {
 
     let slots: RoutineSlot[] = [];
     try {
-      slots = await listRoutine(userId);
+      slots = await fetchWeekRoutine();
     } catch (e) {
-      console.warn('[routineNotifications] Firestore fetch failed, keeping existing schedules:', e);
+      console.warn('[routineNotifications] Routine fetch failed, keeping existing schedules:', e);
       return;
     }
 
     let studentName: string | undefined;
     try {
-      const profile = await getProfile(userId);
-      studentName = profile?.fullName;
+      // The profile lives on the API now, so this stays in step when the
+      // student edits their name. Failures are non-fatal: the greeting falls
+      // back to a generic title.
+      studentName = (await getMe()).name ?? undefined;
     } catch (e) {
       console.warn('[routineNotifications] Profile fetch failed, falling back to generic title:', e);
     }

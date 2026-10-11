@@ -7,11 +7,12 @@ import { BackStep } from '@/components/ui/BackStep';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { ThemedText } from '@/components/ThemedText';
+import { SvgIcon } from '@/components/ui/SvgIcon';
 import { Wrapper } from '@/components/ui/Wrapper';
-import { Colors } from '@/constants/theme';
+import { Palette } from '@/constants/theme';
 import { useAuth } from '@/providers/auth-provider';
 import { useProfile } from '@/hooks/useUserProfile';
-import { deleteAccount, signOut } from '@/services/Auth';
+import { deleteAccount, signOut } from '@/services/auth/auth.services';
 import {
   DEFAULT_REMINDER_HOUR,
   DEFAULT_REMINDER_MINUTE,
@@ -178,7 +179,7 @@ export default function SettingsScreen() {
 
           <ThemedText style={styles.versionText}>App version 1.0.0</ThemedText>
 
-          <Modal visible={signoutModalVisible} backdropColor="rgba(0, 0, 0, 0.4)" animationType="fade">
+          <Modal visible={signoutModalVisible} backdropColor="rgba(15,30,36,0.45)" animationType="fade">
             <View style={styles.modalOverlay}>
               <View style={styles.modalContent}>
                 <ThemedText type="title" style={styles.modalTitle}>
@@ -188,7 +189,7 @@ export default function SettingsScreen() {
                   Are you sure you want to sign out? You will need to log in again to access your account.
                 </ThemedText>
                 <View style={styles.modalButtons}>
-                  <Button title="Cancel" variant="ghost" onPress={() => setSignoutModalVisible(false)} />
+                  <Button title="Cancel" variant="secondary" onPress={() => setSignoutModalVisible(false)} />
                   <Button
                     title="Sign Out"
                     variant="destructive"
@@ -205,7 +206,7 @@ export default function SettingsScreen() {
             </View>
           </Modal>
 
-          <Modal visible={timeModalVisible} backdropColor="rgba(0, 0, 0, 0.4)" animationType="fade" onRequestClose={() => setTimeModalVisible(false)}>
+          <Modal visible={timeModalVisible} backdropColor="rgba(15,30,36,0.45)" animationType="fade" onRequestClose={() => setTimeModalVisible(false)}>
             <Pressable style={styles.modalOverlay} onPress={() => setTimeModalVisible(false)}>
               <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
                 <ThemedText type="title" style={styles.modalTitle}>
@@ -228,7 +229,7 @@ export default function SettingsScreen() {
             </Pressable>
           </Modal>
 
-          <Modal visible={deleteModalVisible} backdropColor="rgba(0, 0, 0, 0.4)" animationType="fade">
+          <Modal visible={deleteModalVisible} backdropColor="rgba(15,30,36,0.45)" animationType="fade">
             <View style={styles.modalOverlay}>
               <View style={styles.modalContent}>
                 <ThemedText type="title" style={styles.modalTitle}>
@@ -238,7 +239,7 @@ export default function SettingsScreen() {
                   This permanently deletes your profile and signs you out. This action cannot be undone.
                 </ThemedText>
                 <View style={styles.modalButtons}>
-                  <Button title="Cancel" variant="ghost" onPress={() => setDeleteModalVisible(false)} disabled={deleting} />
+                  <Button title="Cancel" variant="secondary" onPress={() => setDeleteModalVisible(false)} disabled={deleting} />
                   <Button title="Delete" variant="destructive" onPress={handleDeleteAccount} loading={deleting} />
                 </View>
               </View>
@@ -266,7 +267,7 @@ function MenuRow({
       <ThemedText style={styles.menuLabel}>{label}</ThemedText>
       <View style={styles.menuRowRight}>
         {value && <ThemedText style={styles.menuValue}>{value}</ThemedText>}
-        <ThemedText style={styles.chevron}>{'>'}</ThemedText>
+        <SvgIcon name="chevron" size={16} color={Palette.faint} />
       </View>
     </Pressable>
   );
@@ -297,8 +298,8 @@ function ToggleRow({
         value={value}
         onValueChange={onValueChange}
         disabled={disabled}
-        trackColor={{ true: "#e5e5e5", false: '#e5e5e5' }}
-        thumbColor={Colors.tint}
+        trackColor={{ true: Palette.teal, false: Palette.line }}
+        thumbColor="#FFFFFF"
         style={{ transform: [{ scaleX: 0.9 }, { scaleY: 0.9 }], transitionDuration: '250ms' }}
       />
     </View>
@@ -307,7 +308,7 @@ function ToggleRow({
 
 const styles = StyleSheet.create({
   listCard: {
-    backgroundColor: '#fff',
+    backgroundColor: Palette.surface,
     borderRadius: 16,
     marginBottom: 20,
     paddingHorizontal: 16,
@@ -321,7 +322,7 @@ const styles = StyleSheet.create({
   },
   rowDivider: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#e5e5e5',
+    borderBottomColor: Palette.line,
   },
   menuLabel: {
     fontSize: 15,
@@ -355,7 +356,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   dangerLabel: {
-    color: '#dc2626',
+    color: Palette.risk,
     fontSize: 15,
   },
   versionText: {
@@ -366,13 +367,13 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(15,30,36,0.45)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: Palette.surface,
     borderRadius: 32,
     padding: 20,
     width: '100%',

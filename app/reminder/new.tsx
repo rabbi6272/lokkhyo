@@ -1,4 +1,5 @@
 import { ExternalPathString, useLocalSearchParams, useRouter } from 'expo-router';
+import { Palette } from '@/constants/theme';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
@@ -99,7 +100,7 @@ export default function ReminderFormScreen() {
 
   return (
     <>
-      <BackStep title={isEditing ? 'Edit Reminder' : 'New Reminder'} onBack={() => router.back()} />
+      <BackStep title={isEditing ? 'Edit reminder' : 'New reminder'} onBack={() => router.back()} />
       <Wrapper noTopMargin style={styles.flex}>
         <ScrollView keyboardShouldPersistTaps="handled">
           <ThemedText style={styles.intro}>
@@ -164,7 +165,7 @@ export default function ReminderFormScreen() {
           {reminderHint && <ThemedText style={styles.reminderHint}>⏰ {reminderHint}</ThemedText>}
 
           <Button
-            title={isEditing ? 'Save Changes' : 'Save Reminder'}
+            title={isEditing ? 'Save changes' : 'Save reminder'}
             onPress={handleSubmit}
             loading={isSaving}
             disabled={isEditing && isLoading}
@@ -212,7 +213,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   error: {
-    color: '#e5484d',
+    color: Palette.risk,
     fontSize: 13,
   },
 });

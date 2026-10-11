@@ -9,9 +9,9 @@ import {
   NOTIFICATION_TYPE_ASSESSMENT_REMINDER,
   setGlobalNotificationHandler,
 } from '@/services/notifications/notificationsCore';
-import { listCourses } from '@/services/Courses';
-import { listAssessments } from '@/services/Assessments';
-import { listUpcomingReminders } from '@/services/UpcomingReminders';
+import { fetchCourses } from '@/services/courses/courses.hooks';
+import { fetchCourseAssessments } from '@/services/assessments/assessments.services';
+import { fetchAllReminders } from '@/services/reminders/reminders.services';
 import { getUpcomingAssessmentReminders, buildAssessmentReminderContent } from '@/lib/reminders';
 import { getNotificationPreferences } from '@/lib/notificationPreferences';
 import type { Assessment, UpcomingReminder } from '@/lib/types';
@@ -26,24 +26,20 @@ type ScheduledReminder = ReturnType<typeof getUpcomingAssessmentReminders>[numbe
  * upcoming reminders, then computes which ones still have a future trigger.
  */
 export async function getUpcomingAssessmentRemindersForUser(userId: string) {
-  const courses = await listCourses(userId);
+  const courses = await fetchCourses();
   const courseMap = new Map(courses.map((c) => [c.id, c.code]));
 
   const [assessmentLists, reminderLists] = await Promise.all([
     Promise.allSettled(
       courses.map((course) =>
-        listAssessments(userId, course.id).then((assessments) =>
+        fetchCourseAssessments(course.id).then((assessments) =>
           assessments.map((a) => ({ ...a, courseId: course.id })),
         ),
       ),
     ),
-    Promise.allSettled(
-      courses.map((course) =>
-        listUpcomingReminders(userId, course.id).then((reminders) =>
-          reminders.map((r) => ({ ...r, courseId: course.id })),
-        ),
-      ),
-    ),
+    // One request for every course's reminders; kept settled-shaped so a
+    // failure degrades to "no reminders" exactly like a failed course did.
+    Promise.allSettled([fetchAllReminders()]),
   ]);
 
   const allAssessments = assessmentLists
@@ -113,7 +109,7 @@ async function scheduleReminders(
 }
 
 /**
- * Fetches upcoming assessments from Firestore and schedules reminders.
+ * Fetches upcoming assessments from the API and schedules reminders.
  * Idempotent: cancel all previous assessment reminders, then reschedule.
  */
 export async function syncAssessmentReminders(userId: string): Promise<void> {
@@ -132,7 +128,7 @@ export async function syncAssessmentReminders(userId: string): Promise<void> {
     try {
       ({ upcoming, courseMap } = await getUpcomingAssessmentRemindersForUser(userId));
     } catch (e) {
-      console.warn('[assessmentReminders] Firestore fetch failed, keeping existing schedules:', e);
+      console.warn('[assessmentReminders] Fetch failed, keeping existing schedules:', e);
       return;
     }
 

@@ -1,13 +1,25 @@
-import { KeyboardAvoidingView, StatusBar, StyleSheet } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import type { ReactNode } from 'react';
+import { KeyboardAvoidingView, Platform, StatusBar, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-export function Wrapper({ style, children, noTopMargin }: { style?: any; children: React.ReactNode; noTopMargin?: boolean }) {
+import { Palette, Space } from '@/constants/theme';
+
+/** Page shell: mist background, safe area, side gutters, keyboard-aware. */
+export function Wrapper({
+  style,
+  children,
+  noTopMargin,
+}: {
+  style?: StyleProp<ViewStyle>;
+  children: ReactNode;
+  noTopMargin?: boolean;
+}) {
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
+    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
-      <SafeAreaView style={[styles.safe, style, {
-        paddingTop: noTopMargin ? 0 : 12,
-      }]}>
+      <SafeAreaView
+        edges={noTopMargin ? ['left', 'right'] : ['top', 'left', 'right']}
+        style={[styles.safe, { paddingTop: noTopMargin ? 0 : Space.md }, style]}>
         {children}
       </SafeAreaView>
     </KeyboardAvoidingView>
@@ -15,8 +27,6 @@ export function Wrapper({ style, children, noTopMargin }: { style?: any; childre
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    paddingHorizontal: 16,
-  }
+  flex: { flex: 1, backgroundColor: Palette.mist },
+  safe: { flex: 1, paddingHorizontal: Space.lg, backgroundColor: Palette.mist },
 });

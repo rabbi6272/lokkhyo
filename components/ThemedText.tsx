@@ -1,57 +1,42 @@
 import { StyleSheet, Text, type TextProps } from 'react-native';
 
+import { FontFamily, Palette, Type } from '@/constants/theme';
 
 export type ThemedTextProps = TextProps & {
   color?: string;
-  type?: 'default' | 'title' | 'normalTitle' | 'defaultSemiBold' | 'subtitle' | 'link';
+  type?:
+    | 'default'
+    | 'defaultSemiBold'
+    | 'title'
+    | 'normalTitle'
+    | 'subtitle'
+    | 'link'
+    | 'heading'
+    | 'caption'
+    | 'eyebrow'
+    | 'figure'
+    | 'number';
 };
 
-export function ThemedText({
-  style,
-  color,
-  type = 'default',
-  ...rest
-}: ThemedTextProps) {
-  return (
-    <Text
-      style={[
-        { color },
-        type === 'default' ? styles.default : undefined,
-        type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
-        type === 'title' ? styles.title : undefined,
-        type === 'subtitle' ? styles.subtitle : undefined,
-        type === 'link' ? styles.link : undefined,
-        style,
-      ]}
-      {...rest}
-    />
-  );
+/**
+ * All app text. Types map onto the type scale in `constants/theme`; the older
+ * names (`subtitle`, `defaultSemiBold`, …) are kept so existing screens follow.
+ */
+export function ThemedText({ style, color, type = 'default', ...rest }: ThemedTextProps) {
+  return <Text style={[styles.base, styles[type], color ? { color } : undefined, style]} {...rest} />;
 }
 
 const styles = StyleSheet.create({
-  default: {
-    fontFamily: 'InterRegular',
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  defaultSemiBold: {
-    fontFamily: 'InterSemiBold',
-    fontSize: 15,
-    lineHeight: 20,
-  },
-  title: {
-    fontFamily: 'InterSemiBold',
-    fontSize: 28,
-    lineHeight: 30,
-  },
-  subtitle: {
-    fontFamily: 'InterSemiBold',
-    fontSize: 16,
-  },
-  link: {
-    fontFamily: 'LatoRegular',
-    lineHeight: 20,
-    fontSize: 16,
-    color: '#0a7ea4',
-  },
+  base: { color: Palette.ink },
+  default: Type.body,
+  defaultSemiBold: Type.bodyStrong,
+  title: Type.title,
+  normalTitle: Type.title,
+  subtitle: Type.heading,
+  heading: Type.heading,
+  caption: { ...Type.caption, color: Palette.muted },
+  eyebrow: { ...Type.eyebrow, color: Palette.muted },
+  figure: Type.figure,
+  number: Type.number,
+  link: { fontFamily: FontFamily.semibold, fontSize: 14, color: Palette.teal },
 });

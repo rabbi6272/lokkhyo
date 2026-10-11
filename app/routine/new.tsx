@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { Palette } from '@/constants/theme';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -55,7 +56,7 @@ export default function NewRoutineSlotScreen() {
 
   return (
     <>
-      <BackStep title="New Routine Slot" onBack={() => router.back()} />
+      <BackStep title="Add class" onBack={() => router.back()} />
       <Wrapper noTopMargin style={styles.flex} >
         <ScrollView keyboardShouldPersistTaps="handled">
           <View style={styles.section}>
@@ -122,7 +123,7 @@ export default function NewRoutineSlotScreen() {
           />
 
           <Button
-            title="Save Slot"
+            title="Add class"
             onPress={handleSubmit}
             loading={createRoutineSlot.isPending}
           />
@@ -151,7 +152,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   error: {
-    color: '#e5484d',
+    color: Palette.risk,
     fontSize: 13,
   },
 });

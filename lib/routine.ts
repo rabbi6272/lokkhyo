@@ -28,7 +28,7 @@ export function getTodayOfWeek(): number {
 }
 
 /**
- * Validates and normalizes a raw Firestore routine slot.
+ * Validates and normalizes a raw routine slot.
  * Returns null if the slot is too malformed to use.
  */
 export function normalizeRoutineSlot(raw: Partial<RoutineSlot> & { id: string }): RoutineSlot | null {

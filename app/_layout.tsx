@@ -22,7 +22,9 @@ function RootNavigator() {
   const [loaded] = useFonts({
     'InterRegular': require('../assets/fonts/Inter-Regular.ttf'),
     'InterMedium': require('../assets/fonts/Inter-Medium.ttf'),
-    'InterSemiBold': require('../assets/fonts/Inter-SemiBold.ttf')
+    'InterSemiBold': require('../assets/fonts/Inter-SemiBold.ttf'),
+    'SoraSemiBold': require('../assets/fonts/Sora-SemiBold.ttf'),
+    'SoraBold': require('../assets/fonts/Sora-Bold.ttf'),
   });
 
   useEffect(() => {
@@ -45,6 +47,7 @@ function RootNavigator() {
         <Stack.Screen name="reminder/new" options={{ headerShown: false }} />
         <Stack.Screen name="routine/new" options={{ headerShown: false }} />
         <Stack.Screen name="profile/edit" options={{ headerShown: false }} />
+        <Stack.Screen name="profile/transcript" options={{ headerShown: false }} />
         <Stack.Screen name="settings/settings" options={{ headerShown: false }} />
       </Stack.Protected>
 

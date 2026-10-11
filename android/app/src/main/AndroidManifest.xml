@@ -28,7 +28,6 @@
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="lokkhyo"/>
-        <data android:scheme="exp+lokkhyo"/>
       </intent-filter>
     </activity>
   </application>

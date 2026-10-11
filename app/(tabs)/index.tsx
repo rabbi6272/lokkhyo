@@ -1,119 +1,139 @@
 import { useQueries } from '@tanstack/react-query';
-import { Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { AttendanceMeter } from '@/components/AttendanceMeter';
+import { CourseCard } from '@/components/CourseCard';
+import { ThemedText } from '@/components/ThemedText';
+import { Card, Divider } from '@/components/ui/Card';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { SectionHeader } from '@/components/ui/SectionHeader';
+import { Wrapper } from '@/components/ui/Wrapper';
+import { Palette, Radius, Space } from '@/constants/theme';
+import { useAllCoursesAttendance } from '@/hooks/useAllCoursesAttendance';
 import { useCourses } from '@/hooks/useCourses';
 import { useRoutines } from '@/hooks/useRoutines';
 import { useProfile } from '@/hooks/useUserProfile';
-
-import { CourseCard } from '@/components/CourseCard';
-import { ThemedText } from '@/components/ThemedText';
-import { PageHeader } from '@/components/ui/PageHeader';
-import { Wrapper } from '@/components/ui/Wrapper';
-
-import { SvgIcon } from '@/components/ui/SvgIcon';
-import { Colors } from '@/constants/theme';
-import { useAllCoursesAttendance } from '@/hooks/useAllCoursesAttendance';
-import { DAY_NAMES } from '@/lib/constants';
-import { getTodayOfWeek } from '@/lib/routine';
+import { DAY_NAMES, MONTH_NAMES } from '@/lib/constants';
+import { formatTime12h, getTodayOfWeek } from '@/lib/routine';
 import { parseTime } from '@/lib/validate';
 import { useAuth } from '@/providers/auth-provider';
-import { listAssessments } from '@/services/Assessments';
+import { courseAssessmentsQuery } from '@/services/assessments/assessments.hooks';
 
 export default function HomeScreen() {
+  const router = useRouter();
   const { user } = useAuth();
   const { profileData } = useProfile();
   const { courses } = useCourses();
   const { slots } = useRoutines();
-  const { courseAttendance, sessionsByDate, overall, isLoading } = useAllCoursesAttendance();
-
+  const { courseAttendance } = useAllCoursesAttendance();
 
   const progressQueries = useQueries({
-    queries: courses.map((course) => ({
-      queryKey: ['assessments', course.id],
-      queryFn: () => (user ? listAssessments(user.uid, course.id) : []),
-      enabled: !!user && !!course.id,
-    })),
+    queries: courses.map((course) => courseAssessmentsQuery(user?.uid, course.id)),
   });
 
-  const firstName = profileData?.fullName?.split(' ')[0] ?? 'Student';
-
+  const firstName = profileData?.fullName?.split(' ')[0] || 'there';
+  const now = new Date();
+  const today = getTodayOfWeek();
+  const todayLabel = `${DAY_NAMES[today]}, ${now.getDate()} ${MONTH_NAMES[now.getMonth()]}`;
+  const todaySlots = slots
+    .filter((s) => s.dayOfWeek === today)
+    .sort((a, b) => parseTime(a.startTime) - parseTime(b.startTime));
   const nextClass = findNextClass(slots);
-
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
   return (
-    <Wrapper style={styles.safe}>
-      <PageHeader title={`Hello, ${firstName}`} />
-      <ScrollView contentContainerStyle={styles.content}>
+    <Wrapper>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <PageHeader eyebrow={todayLabel} title={`Hello, ${firstName}`} />
+
         {nextClass ? (
-          <View style={styles.nextClass}>
-            <ThemedText style={styles.label}>NEXT CLASS</ThemedText>
-            <ThemedText type="subtitle" style={styles.nextClassTitle}>
-              {nextClass.courseLabel}
+          <View style={styles.hero} accessible accessibilityLabel={`Next class ${nextClass.courseLabel} ${nextClass.when} at ${nextClass.startTime}`}>
+            <ThemedText type="eyebrow" color={Palette.tealOnDark}>
+              NEXT CLASS · {nextClass.when.toUpperCase()}
             </ThemedText>
-            <ThemedText style={styles.nextClassMeta}>
-              {nextClass.startTime} – {nextClass.endTime}
-              {nextClass.room ? ` · ${nextClass.room}` : ''}
-            </ThemedText>
-          </View>
-        ) : null}
-
-        <View style={styles.sectionRow}>
-          <ThemedText type="subtitle">CT Progress</ThemedText>
-          <Link href="/courses" style={styles.seeAll}>See all</Link>
-        </View>
-
-        {courses.length === 0 ? (
-          <View style={{ alignItems: 'center', marginTop: 20 }}>
-            <SvgIcon name="empty" size={200} color={Colors.icon} />
-            <ThemedText style={styles.meta}>No courses yet. Add one from the Courses tab.</ThemedText>
-          </View>
-        ) : (
-          courses.slice(0, 3).map((course, index) => (
-            <CourseCard key={course.id} course={course} assessments={progressQueries[index]?.data} />
-          ))
-        )}
-
-        <View style={styles.sectionRow}>
-          <ThemedText type="subtitle">Routine</ThemedText>
-          <Link href="/routine" style={styles.seeAll}>See all</Link>
-        </View>
-
-        {slots.length === 0 ? (
-          <View style={{ alignItems: 'center', marginTop: 20 }}>
-            <SvgIcon name="empty" size={200} color={Colors.icon} />
-            <ThemedText style={styles.meta}>No routine yet. Add one from the Routine tab.</ThemedText>
-          </View>
-        ) : (
-          slots.slice(0, 3).map((slot) => (
-            <View key={`${slot.dayOfWeek}-${slot.startTime}`} style={styles.targetRow}>
-              <ThemedText>{DAY_NAMES[slot.dayOfWeek]} {slot.startTime} – {slot.endTime}</ThemedText>
-              <ThemedText>{slot.courseLabel}</ThemedText>
+            <View style={styles.heroRow}>
+              <ThemedText type="figure" color="#FFFFFF">
+                {formatTime12h(nextClass.startTime)}
+              </ThemedText>
+              <ThemedText type="heading" color="#FFFFFF" style={styles.heroCourse} numberOfLines={1}>
+                {nextClass.courseLabel}
+              </ThemedText>
             </View>
-          ))
-        )}
-
-        <View style={styles.sectionRow}>
-          <ThemedText type="subtitle">Attendance</ThemedText>
-          <Link href="/attendance" style={styles.seeAll}>See all</Link>
-        </View>
-        {courses.length === 0 ? (
-          <View style={{ alignItems: 'center', marginTop: 20 }}>
-            <SvgIcon name="empty" size={200} color={Colors.icon} />
-            <ThemedText style={styles.meta}>No attendance data yet. Add courses and sessions to track attendance.</ThemedText>
+            <ThemedText type="caption" color={Palette.tealOnDark}>
+              Until {formatTime12h(nextClass.endTime)}
+              {nextClass.room ? ` · Room ${nextClass.room}` : ''}
+            </ThemedText>
           </View>
         ) : (
-          courses.slice(0, 3).map((course) => (
-            <View key={course.id} style={styles.attendanceRow}>
-              <View style={{ ...styles.targetRow, marginBottom: 2 }}>
-                <ThemedText type='defaultSemiBold'>{course.code}</ThemedText>
-                <ThemedText>
-                  {courseAttendance.find((attendance) => attendance.course.id === course.id)?.stats.percent + "%" || 'N/A'}
-                </ThemedText>
+          <EmptyState
+            title="No classes in your routine"
+            body="Add your weekly classes to see what's next."
+            actionLabel="Add a class"
+            onAction={() => router.push('/routine/new')}
+          />
+        )}
+
+        {todaySlots.length > 0 && (
+          <>
+            <SectionHeader title="Today" actionLabel="Routine" href="/routine" />
+            <Card dense>
+              {todaySlots.map((slot, index) => {
+                const done = parseTime(slot.endTime) <= nowMinutes;
+                return (
+                  <View key={slot.id}>
+                    {index > 0 && <Divider />}
+                    <View style={[styles.slotRow, done && styles.done]}>
+                      <ThemedText type="number" style={styles.slotTime}>
+                        {formatTime12h(slot.startTime)}
+                      </ThemedText>
+                      <ThemedText type="defaultSemiBold" style={styles.flex} numberOfLines={1}>
+                        {slot.courseLabel}
+                      </ThemedText>
+                      {slot.room ? <ThemedText type="caption">{slot.room}</ThemedText> : null}
+                    </View>
+                  </View>
+                );
+              })}
+            </Card>
+          </>
+        )}
+
+        <SectionHeader title="Courses" actionLabel="See all" href="/courses" />
+        {courses.length === 0 ? (
+          <EmptyState
+            title="No courses yet"
+            body="Add a course to start tracking CT marks."
+            actionLabel="Add a course"
+            onAction={() => router.push('/course/new')}
+          />
+        ) : (
+          <Card dense style={styles.listCard}>
+            {courses.slice(0, 3).map((course, index) => (
+              <View key={course.id}>
+                {index > 0 && <Divider />}
+                <CourseCard course={course} assessments={progressQueries[index]?.data} inline />
               </View>
-              <ThemedText>{course.title}</ThemedText>
-            </View>
-          ))
+            ))}
+          </Card>
+        )}
+
+        {courses.length > 0 && (
+          <>
+            <SectionHeader title="Attendance" actionLabel="See all" href="/attendance" />
+            <Card dense style={styles.listCard}>
+              {courses.slice(0, 3).map((course, index) => (
+                <View key={course.id}>
+                  {index > 0 && <Divider />}
+                  <AttendanceMeter
+                    code={course.code}
+                    stats={courseAttendance.find((a) => a.course.id === course.id)?.stats}
+                  />
+                </View>
+              ))}
+            </Card>
+          </>
         )}
       </ScrollView>
     </Wrapper>
@@ -128,87 +148,31 @@ function findNextClass(slots: ReturnType<typeof useRoutines>['slots']) {
 
   for (let offset = 0; offset < 7; offset++) {
     const dayIndex = (today + offset) % 7;
-    const daySlots = slots
+    const match = slots
       .filter((s) => s.dayOfWeek === dayIndex)
-      .sort((a, b) => parseTime(a.startTime) - parseTime(b.startTime));
-    const match = daySlots.find((s) => {
-      if (offset === 0) return parseTime(s.startTime) >= nowMinutes;
-      return true;
-    });
+      .sort((a, b) => parseTime(a.startTime) - parseTime(b.startTime))
+      .find((s) => offset > 0 || parseTime(s.startTime) >= nowMinutes);
     if (match) {
-      return { ...match, day: DAY_NAMES[dayIndex], offset };
+      const when = offset === 0 ? 'Today' : offset === 1 ? 'Tomorrow' : DAY_NAMES[dayIndex];
+      return { ...match, when };
     }
   }
   return null;
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
+  content: { paddingBottom: Space.xxl },
+  flex: { flex: 1 },
+  hero: {
+    backgroundColor: Palette.teal,
+    borderRadius: Radius.lg,
+    padding: Space.lg + 4,
+    gap: Space.xs,
   },
-  content: {
-    paddingVertical: 20,
-  },
-  greeting: {
-    marginBottom: 2,
-  },
-  subGreeting: {
-    opacity: 0.7,
-    marginBottom: 20,
-  },
-  nextClass: {
-    backgroundColor: '#0a7ea4',
-    borderRadius: 14,
-    padding: 16,
-    gap: 4,
-    marginBottom: 24,
-  },
-  label: {
-    color: '#e6f4fe',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  nextClassTitle: {
-    color: '#fff',
-  },
-  nextClassMeta: {
-    color: '#e6f4fe',
-    fontSize: 14,
-  },
-  meta: {
-    opacity: 0.6,
-    fontSize: 14,
-  },
-  sectionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-    marginTop: 8,
-  },
-  seeAll: {
-    color: '#0a7ea4',
-    fontWeight: '600',
-  },
-  target: {
-    marginBottom: 12,
-    gap: 6,
-  },
-  targetRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  attendanceRow: {
-    flexDirection: 'column',
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderBottomWidth: 1,
-    borderLeftWidth: 5,
-    borderColor: Colors.icon,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    marginBottom: 8,
-  },
+  heroRow: { flexDirection: 'row', alignItems: 'baseline', gap: Space.md, marginTop: Space.xs },
+  heroCourse: { flexShrink: 1 },
+  listCard: { paddingVertical: 0 },
+  slotRow: { flexDirection: 'row', alignItems: 'center', gap: Space.md, paddingVertical: Space.md },
+  slotTime: { width: 72, color: Palette.teal },
+  done: { opacity: 0.45 },
 });
