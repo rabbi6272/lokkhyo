@@ -230,7 +230,9 @@ android {
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
             def enablePngCrunchInRelease = findProperty('android.enablePngCrunchInReleaseBuilds') ?: 'true'
             crunchPngs enablePngCrunchInRelease.toBoolean()
-            signingConfig signingConfigs.release
+            // Debug-signed release APK (internal testing): the configured
+            // release.jks does not exist, so sign with the bundled debug key.
+            signingConfig signingConfigs.debug
         }
     }
     packagingOptions {

@@ -176,6 +176,26 @@ The server is the source of truth. See [`../SERVER.md`](../SERVER.md) for every 
    yarn android                # or: yarn ios
    ```
 
+## Building a release APK
+
+### Locally, with Gradle (arm64-v8a only)
+
+Build a release APK straight through the Android toolchain — no EAS. Needs Java 17, the Android SDK (platform + build-tools + NDK) and `ANDROID_HOME` set:
+
+```bash
+cd android
+./gradlew :app:assembleRelease -PreactNativeArchitectures=arm64-v8a
+```
+
+- Output: `android/app/build/outputs/apk/release/app-release.apk`.
+- `-PreactNativeArchitectures=arm64-v8a` restricts the APK to 64-bit ARM only (the default in `android/gradle.properties` builds all four ABIs). Pass it on the command line — `npx expo prebuild` regenerates `gradle.properties` and would drop an edit made there.
+- **Signing is debug for now.** `android/app/build.gradle` signs `release` with `signingConfigs.debug` because `android/app/release.jks` does not exist. That is fine for internal/testing installs, but **not** for Play Store uploads — create a real release keystore before shipping.
+- No prebuild is needed for the app's native modules here; `expo-image-picker`'s own manifest already merges in the `CAMERA`/media permissions.
+
+### With EAS
+
+The `eas.json` `production` profile builds an APK (`buildType: "apk"`, `:app:assembleRelease`). See the build scripts below.
+
 ## Scripts
 
 | Command | Purpose |
@@ -183,3 +203,7 @@ The server is the source of truth. See [`../SERVER.md`](../SERVER.md) for every 
 | `yarn start` | Start the Expo dev server |
 | `yarn android` / `yarn ios` | Run on a device or emulator |
 | `yarn check:errors` | Type-check + lint (the pre-commit gate) |
+| `yarn build:apk` | Prebuild + local EAS release APK (Android) |
+| `yarn build:preview` | Prebuild + local EAS preview build (Android) |
+| `yarn build:dev` | Local EAS development build (Android) |
+| `yarn build:android` / `yarn build:ios` | Cloud EAS production build |
