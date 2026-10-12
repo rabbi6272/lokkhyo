@@ -16,11 +16,26 @@ import {
 
 const DAILY_ROUTINE_KEY = 'lokkhyo.pref.dailyRoutineNotifications';
 const ASSESSMENT_REMINDERS_KEY = 'lokkhyo.pref.assessmentReminderNotifications';
-const REMINDER_HOUR_KEY = 'lokkhyo.pref.reminderHour';
-const REMINDER_MINUTE_KEY = 'lokkhyo.pref.reminderMinute';
+const ATTENDANCE_DIGEST_KEY = 'lokkhyo.pref.attendanceDigestNotifications';
+const ATTENDANCE_RISK_KEY = 'lokkhyo.pref.attendanceRiskNotifications';
 
-export const DEFAULT_REMINDER_HOUR = 7;
-export const DEFAULT_REMINDER_MINUTE = 0;
+const MORNING_HOUR_KEY = 'lokkhyo.pref.morningHour';
+const MORNING_MINUTE_KEY = 'lokkhyo.pref.morningMinute';
+const EVENING_HOUR_KEY = 'lokkhyo.pref.eveningHour';
+const EVENING_MINUTE_KEY = 'lokkhyo.pref.eveningMinute';
+const ASSESSMENT_HOUR_KEY = 'lokkhyo.pref.assessmentHour';
+const ASSESSMENT_MINUTE_KEY = 'lokkhyo.pref.assessmentMinute';
+
+/**
+ * Defaults mirror the server's, so a first launch that never reaches the API
+ * agrees with what the API would have said.
+ */
+export const DEFAULT_MORNING_HOUR = 7;
+export const DEFAULT_MORNING_MINUTE = 0;
+export const DEFAULT_EVENING_HOUR = 20;
+export const DEFAULT_EVENING_MINUTE = 0;
+export const DEFAULT_ASSESSMENT_HOUR = 7;
+export const DEFAULT_ASSESSMENT_MINUTE = 0;
 
 export type NotificationPreferences = AppNotificationPrefs;
 
@@ -46,22 +61,67 @@ async function readNumberPref(key: string, fallback: number): Promise<number> {
 }
 
 async function readCache(): Promise<NotificationPreferences> {
-  const [dailyRoutineEnabled, assessmentRemindersEnabled, reminderHour, reminderMinute] = await Promise.all([
+  const [
+    dailyRoutineEnabled,
+    attendanceDigestEnabled,
+    attendanceRiskEnabled,
+    assessmentRemindersEnabled,
+    morningHour,
+    morningMinute,
+    eveningHour,
+    eveningMinute,
+    assessmentHour,
+    assessmentMinute,
+  ] = await Promise.all([
     readBoolPref(DAILY_ROUTINE_KEY, true),
+    readBoolPref(ATTENDANCE_DIGEST_KEY, true),
+    readBoolPref(ATTENDANCE_RISK_KEY, true),
     readBoolPref(ASSESSMENT_REMINDERS_KEY, true),
-    readNumberPref(REMINDER_HOUR_KEY, DEFAULT_REMINDER_HOUR),
-    readNumberPref(REMINDER_MINUTE_KEY, DEFAULT_REMINDER_MINUTE),
+    readNumberPref(MORNING_HOUR_KEY, DEFAULT_MORNING_HOUR),
+    readNumberPref(MORNING_MINUTE_KEY, DEFAULT_MORNING_MINUTE),
+    readNumberPref(EVENING_HOUR_KEY, DEFAULT_EVENING_HOUR),
+    readNumberPref(EVENING_MINUTE_KEY, DEFAULT_EVENING_MINUTE),
+    readNumberPref(ASSESSMENT_HOUR_KEY, DEFAULT_ASSESSMENT_HOUR),
+    readNumberPref(ASSESSMENT_MINUTE_KEY, DEFAULT_ASSESSMENT_MINUTE),
   ]);
-  return { dailyRoutineEnabled, assessmentRemindersEnabled, reminderHour, reminderMinute };
+  return {
+    dailyRoutineEnabled,
+    attendanceDigestEnabled,
+    attendanceRiskEnabled,
+    assessmentRemindersEnabled,
+    morningHour,
+    morningMinute,
+    eveningHour,
+    eveningMinute,
+    assessmentHour,
+    assessmentMinute,
+  };
 }
 
 async function writeCache(prefs: Partial<NotificationPreferences>): Promise<void> {
   const entries: [string, string][] = [];
-  if (prefs.dailyRoutineEnabled !== undefined) entries.push([DAILY_ROUTINE_KEY, String(prefs.dailyRoutineEnabled)]);
-  if (prefs.assessmentRemindersEnabled !== undefined)
-    entries.push([ASSESSMENT_REMINDERS_KEY, String(prefs.assessmentRemindersEnabled)]);
-  if (prefs.reminderHour !== undefined) entries.push([REMINDER_HOUR_KEY, String(prefs.reminderHour)]);
-  if (prefs.reminderMinute !== undefined) entries.push([REMINDER_MINUTE_KEY, String(prefs.reminderMinute)]);
+  const bools: [string, boolean | undefined][] = [
+    [DAILY_ROUTINE_KEY, prefs.dailyRoutineEnabled],
+    [ATTENDANCE_DIGEST_KEY, prefs.attendanceDigestEnabled],
+    [ATTENDANCE_RISK_KEY, prefs.attendanceRiskEnabled],
+    [ASSESSMENT_REMINDERS_KEY, prefs.assessmentRemindersEnabled],
+  ];
+  for (const [key, value] of bools) {
+    if (value !== undefined) entries.push([key, String(value)]);
+  }
+
+  const numbers: [string, number | undefined][] = [
+    [MORNING_HOUR_KEY, prefs.morningHour],
+    [MORNING_MINUTE_KEY, prefs.morningMinute],
+    [EVENING_HOUR_KEY, prefs.eveningHour],
+    [EVENING_MINUTE_KEY, prefs.eveningMinute],
+    [ASSESSMENT_HOUR_KEY, prefs.assessmentHour],
+    [ASSESSMENT_MINUTE_KEY, prefs.assessmentMinute],
+  ];
+  for (const [key, value] of numbers) {
+    if (value !== undefined) entries.push([key, String(value)]);
+  }
+
   try {
     await AsyncStorage.multiSet(entries);
   } catch {
@@ -98,10 +158,26 @@ export async function setDailyRoutineEnabled(enabled: boolean): Promise<void> {
   await savePreferences({ dailyRoutineEnabled: enabled });
 }
 
+export async function setAttendanceDigestEnabled(enabled: boolean): Promise<void> {
+  await savePreferences({ attendanceDigestEnabled: enabled });
+}
+
+export async function setAttendanceRiskEnabled(enabled: boolean): Promise<void> {
+  await savePreferences({ attendanceRiskEnabled: enabled });
+}
+
 export async function setAssessmentRemindersEnabled(enabled: boolean): Promise<void> {
   await savePreferences({ assessmentRemindersEnabled: enabled });
 }
 
-export async function setReminderTime(hour: number, minute: number): Promise<void> {
-  await savePreferences({ reminderHour: hour, reminderMinute: minute });
+export async function setMorningTime(hour: number, minute: number): Promise<void> {
+  await savePreferences({ morningHour: hour, morningMinute: minute });
+}
+
+export async function setEveningTime(hour: number, minute: number): Promise<void> {
+  await savePreferences({ eveningHour: hour, eveningMinute: minute });
+}
+
+export async function setAssessmentReminderTime(hour: number, minute: number): Promise<void> {
+  await savePreferences({ assessmentHour: hour, assessmentMinute: minute });
 }

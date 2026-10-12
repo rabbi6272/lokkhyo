@@ -22,6 +22,26 @@ export function toSemester(dto: SemesterDto): Semester {
 /** The fields a semester form collects → `POST /semesters`. */
 export type NewSemester = Pick<Semester, 'name' | 'targetGpa' | 'startDate' | 'totalWeeks'>;
 
+/**
+ * Sort weight for a term: the one the student is in first, then other live
+ * terms, then the archive, and terms the course list does not recognise last.
+ */
+export function semesterRank(semester: Semester | undefined, currentSemesterId?: string): number {
+  if (!semester) return 3;
+  if (semester.id === currentSemesterId) return 0;
+  return semester.status === 'active' ? 1 : 2;
+}
+
+/** Newest terms first within a band, so the list reads like a history. */
+export function orderSemesters(semesters: Semester[], currentSemesterId?: string): Semester[] {
+  return [...semesters].sort(
+    (a, b) =>
+      semesterRank(a, currentSemesterId) - semesterRank(b, currentSemesterId) ||
+      b.startDate.localeCompare(a.startDate) ||
+      a.id.localeCompare(b.id),
+  );
+}
+
 export function toCreateSemesterInput(data: NewSemester): CreateSemesterDto {
   return {
     name: data.name.trim(),

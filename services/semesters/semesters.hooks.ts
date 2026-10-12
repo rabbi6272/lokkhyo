@@ -53,7 +53,12 @@ export function useDeleteSemester() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteSemester(id, true),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: semesterKeys.all }),
+    onSuccess: () => {
+      // A cascade delete takes courses, attendance, assessments, results and
+      // deadlines with it, and may move the profile's current term — same
+      // reasoning as `useDeleteCourse`: every downstream cache can be stale.
+      void queryClient.invalidateQueries();
+    },
   });
 }
 

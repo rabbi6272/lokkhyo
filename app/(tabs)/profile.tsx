@@ -92,6 +92,11 @@ export default function ProfileScreen() {
                 onPress={() => router.push('/(tabs)/courses')}
               />
               <MenuRow
+                icon="calender"
+                label="Semesters"
+                onPress={() => router.push('/semesters')}
+              />
+              <MenuRow
                 icon="courses"
                 label="Transcript & degree status"
                 onPress={() => router.push('/profile/transcript')}

@@ -108,9 +108,9 @@ export async function syncRoutineNotifications(userId: string): Promise<void> {
 
     await cancelNotificationsByPrefix(ROUTINE_NOTIFICATION_PREFIX);
 
-    const { reminderHour, reminderMinute } = await getNotificationPreferences();
+    const { morningHour, morningMinute } = await getNotificationPreferences();
     const grouped = groupRoutineByDay(slots);
-    await scheduleNotifications(grouped, reminderHour, reminderMinute, studentName);
+    await scheduleNotifications(grouped, morningHour, morningMinute, studentName);
   } catch (e) {
     console.warn('[routineNotifications] Sync failed:', e);
   }

@@ -20,6 +20,7 @@ import { formatTime12h, getTodayOfWeek } from '@/lib/routine';
 import { parseTime } from '@/lib/validate';
 import { useAuth } from '@/providers/auth-provider';
 import { courseAssessmentsQuery } from '@/services/assessments/assessments.hooks';
+import { courseResultsQuery } from '@/services/grades/grades.hooks';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -31,6 +32,9 @@ export default function HomeScreen() {
 
   const progressQueries = useQueries({
     queries: courses.map((course) => courseAssessmentsQuery(user?.uid, course.id)),
+  });
+  const resultQueries = useQueries({
+    queries: courses.map((course) => courseResultsQuery(user?.uid, course.id)),
   });
 
   const firstName = profileData?.fullName?.split(' ')[0] || 'there';
@@ -113,7 +117,12 @@ export default function HomeScreen() {
             {courses.slice(0, 3).map((course, index) => (
               <View key={course.id}>
                 {index > 0 && <Divider />}
-                <CourseCard course={course} assessments={progressQueries[index]?.data} inline />
+                <CourseCard
+                  course={course}
+                  assessments={progressQueries[index]?.data}
+                  results={resultQueries[index]?.data}
+                  inline
+                />
               </View>
             ))}
           </Card>

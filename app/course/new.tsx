@@ -1,6 +1,6 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Palette } from '@/constants/theme';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -15,10 +15,12 @@ import { BackStep } from '@/components/ui/BackStep';
 
 export default function NewCourseScreen() {
   const router = useRouter();
+  /** Opening from a semester's page means that term, not the first in the list. */
+  const { semesterId: semesterParam } = useLocalSearchParams<{ semesterId?: string }>();
   const { createCourse } = useCourses();
   const { semesters } = useSemesters();
 
-  const [semesterId, setSemesterId] = useState(semesters[0]?.id ?? '');
+  const [semesterId, setSemesterId] = useState(semesterParam ?? '');
   const [code, setCode] = useState('');
   const [title, setTitle] = useState('');
   const [credits, setCredits] = useState('');
@@ -28,6 +30,11 @@ export default function NewCourseScreen() {
   const [teachers, setTeachers] = useState<string[]>([]);
   const [isLab, setIsLab] = useState(false);
   const [errors, setErrors] = useState<Record<string, string | null>>({});
+
+  // The term list arrives after mount, so fall back to the first one once it does.
+  useEffect(() => {
+    if (!semesterId && semesters[0]) setSemesterId(semesters[0].id);
+  }, [semesterId, semesters]);
 
   const handleAddTeacher = () => {
     const name = teacherInput.trim();

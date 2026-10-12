@@ -48,6 +48,9 @@ function RootNavigator() {
         <Stack.Screen name="routine/new" options={{ headerShown: false }} />
         <Stack.Screen name="profile/edit" options={{ headerShown: false }} />
         <Stack.Screen name="profile/transcript" options={{ headerShown: false }} />
+        <Stack.Screen name="semesters/index" options={{ headerShown: false }} />
+        <Stack.Screen name="semesters/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="semesters/new" options={{ headerShown: false }} />
         <Stack.Screen name="settings/settings" options={{ headerShown: false }} />
       </Stack.Protected>
 

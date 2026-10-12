@@ -7,6 +7,8 @@ export interface NotificationPrefsDto {
   /** `HH:mm`. */
   morningRoutineTime: string;
   eveningAttendanceTime: string;
+  /** `HH:mm`. The time of day device-local assessment reminders fire. */
+  assessmentReminderTime: string;
   categoriesEnabled: Record<NotificationCategoryDto, boolean>;
   attendanceCutoffHour: number;
 }
@@ -15,6 +17,7 @@ export interface UpdateNotificationPrefsDto {
   timezone?: string;
   morningRoutineTime?: string;
   eveningAttendanceTime?: string;
+  assessmentReminderTime?: string;
   categoriesEnabled?: Partial<Record<NotificationCategoryDto, boolean>>;
   attendanceCutoffHour?: number;
 }

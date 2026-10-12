@@ -31,12 +31,20 @@ export function useCgpa(userId?: string | null) {
   return useQuery({ queryKey: gradeKeys.cgpa(userId), queryFn: getCgpa, enabled: !!userId });
 }
 
-export function useSemesterGpa(userId: string | null | undefined, semesterId: string | undefined) {
-  return useQuery({
+/**
+ * The query object for one term's GPA, exposed as a factory so a list of terms
+ * can fan out through `useQueries` instead of mounting one hook per row.
+ */
+export function semesterGpaQuery(userId: string | null | undefined, semesterId: string | null | undefined) {
+  return {
     queryKey: gradeKeys.semesterGpa(userId, semesterId ?? ''),
     queryFn: () => getSemesterGpa(semesterId as string),
     enabled: !!userId && !!semesterId,
-  });
+  };
+}
+
+export function useSemesterGpa(userId: string | null | undefined, semesterId: string | undefined) {
+  return useQuery(semesterGpaQuery(userId, semesterId));
 }
 
 export function useDegreeStatus(userId?: string | null) {
@@ -47,12 +55,20 @@ export function useTranscript(userId?: string | null) {
   return useQuery({ queryKey: gradeKeys.transcript(userId), queryFn: getTranscript, enabled: !!userId });
 }
 
-export function useCourseResults(userId: string | null | undefined, courseId: string) {
-  return useQuery({
+/**
+ * One course's official results, as a factory for the same reason: a course
+ * list fans out with `useQueries` rather than a hook per card.
+ */
+export function courseResultsQuery(userId: string | null | undefined, courseId: string) {
+  return {
     queryKey: gradeKeys.courseResults(userId, courseId),
     queryFn: () => listCourseResults(courseId),
     enabled: !!userId && !!courseId,
-  });
+  };
+}
+
+export function useCourseResults(userId: string | null | undefined, courseId: string) {
+  return useQuery(courseResultsQuery(userId, courseId));
 }
 
 export function useGradingScale() {

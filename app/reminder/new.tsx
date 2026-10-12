@@ -13,8 +13,7 @@ import { useCourses } from '@/hooks/useCourses';
 import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
 import { useUpcomingReminders } from '@/hooks/useUpcomingReminders';
 import { ASSESSMENT_TYPES, ASSESSMENT_TYPE_LABELS } from '@/lib/constants';
-import { formatDateLabel, getAssessmentReminderTrigger, getReminderLeadDays, toDateKey } from '@/lib/reminders';
-import { formatTime12h } from '@/lib/routine';
+import { buildReminderRangeHint } from '@/lib/reminders';
 import type { AssessmentType } from '@/lib/types';
 import { required } from '@/lib/validate';
 
@@ -55,20 +54,7 @@ export default function ReminderFormScreen() {
     ? null
     : !prefs.assessmentRemindersEnabled
       ? 'Assessment reminders are off — enable them in Settings.'
-      : (() => {
-          const trigger = getAssessmentReminderTrigger(
-            trimmedDate,
-            type,
-            new Date(),
-            prefs.reminderHour,
-            prefs.reminderMinute,
-          );
-          if (!trigger) return 'No reminder — this date is too close or already past.';
-          const hhmm = `${String(prefs.reminderHour).padStart(2, '0')}:${String(prefs.reminderMinute).padStart(2, '0')}`;
-          const lead = getReminderLeadDays(type);
-          const leadLabel = lead ? ` · ${lead} day${lead > 1 ? 's' : ''} before` : '';
-          return `Reminder ${formatDateLabel(toDateKey(trigger))} at ${formatTime12h(hhmm)}${leadLabel}`;
-        })();
+      : buildReminderRangeHint(trimmedDate, type, prefs);
 
   const handleSubmit = async () => {
     const nextErrors: Record<string, string | null> = {
